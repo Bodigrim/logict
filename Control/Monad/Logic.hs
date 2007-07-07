@@ -16,12 +16,12 @@
 --
 --    Inspired by the paper
 --    /Backtracking, Interleaving, and Terminating
---        Monad Transformers/
+--        Monad Transformers/, by
 --    Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
---    (http://www.cs.rutgers.edu/~ccshan/logicprog/LogicT-icfp2005.pdf)
+--    (<http://www.cs.rutgers.edu/~ccshan/logicprog/LogicT-icfp2005.pdf>).
 --
 --    Heavily adapted from the implementation here:
---    (http://okmij.org/ftp/packages/LogicT.tar.gz)
+--    (<http://okmij.org/ftp/packages/LogicT.tar.gz>).
 -------------------------------------------------------------------------
 
 module Control.Monad.Logic (
@@ -32,7 +32,7 @@ module Control.Monad.Logic (
     observe,
     observeMany,
     observeAll,
-    -- * The LogicT monad trasnformer
+    -- * The LogicT monad transformer
     LogicT(),
     runLogicT,
     observeT,
