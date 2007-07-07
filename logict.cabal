@@ -1,10 +1,23 @@
-Name:           logict
-Version:        0.1
-Description:    Continuation-based, backtracking, logic programming monad
-License:        BSD3
-License-File:   LICENSE
-Author:         Dan Doel
-Maintainer:     dan.doel@gmail.com
-Build-Depends:  base, mtl
+Name:                   logict
+Version:                0.1
+Description:            Continuation-based, backtracking, logic programming monad.
+                        An adaptation of the two-continuation implementation found
+                        in the paper "Backtracking, Interleaving, and Terminating
+                        Monad Transformers" available here:
+                        <http://okmij.org/ftp/papers/LogicT.pdf>
+Category:               Control
+License:                BSD3
+License-File:           LICENSE
+Copyright:              Copyright (c) 2007, Dan Doel
+Author:                 Dan Doel
+Maintainer:             dan.doel@gmail.com
+Stability:              Experimental, based on paper
+Tested-With:            GHC
+Build-Depends:          base, mtl
+Exposed-Modules:        Control.Monad
+                        Control.Monad.Logic
+Extensions:             MultiParamTypeClasses
+                        GeneralizedNewtypeDeriving
+                        UndecidableInstances
 
 ghc-options: -O2
