@@ -14,8 +14,8 @@ Maintainer:             dan.doel@gmail.com
 Stability:              Experimental, based on paper
 Tested-With:            GHC
 Build-Depends:          base, mtl
-Exposed-Modules:        Control.Monad
-                        Control.Monad.Logic
+Exposed-Modules:        Control.Monad.Logic
+                        Control.Monad.Logic.Class
 Extensions:             MultiParamTypeClasses
                         UndecidableInstances
 

@@ -7,7 +7,7 @@
 --
 -- Maintainer  : dan.doel@gmail.com
 -- Stability   : experimental
--- Portability : non-portable (generalized newtype deriving)
+-- Portability : non-portable (multi-parameter type classes)
 --
 -- A backtracking, logic programming monad.
 --
