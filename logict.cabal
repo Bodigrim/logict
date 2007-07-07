@@ -4,7 +4,7 @@ Description:            Continuation-based, backtracking, logic programming mona
                         An adaptation of the two-continuation implementation found
                         in the paper "Backtracking, Interleaving, and Terminating
                         Monad Transformers" available here:
-                        <http://okmij.org/ftp/papers/LogicT.pdf>
+                        http://okmij.org/ftp/papers/LogicT.pdf
 Category:               Control
 License:                BSD3
 License-File:           LICENSE
@@ -18,5 +18,5 @@ Exposed-Modules:        Control.Monad.Logic,
                         Control.Monad.Logic.Class
 Extensions:             MultiParamTypeClasses,
                         UndecidableInstances
+GHC-Options:            -O2
 
-ghc-options: -O2
