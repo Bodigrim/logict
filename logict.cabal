@@ -17,7 +17,6 @@ Build-Depends:          base, mtl
 Exposed-Modules:        Control.Monad
                         Control.Monad.Logic
 Extensions:             MultiParamTypeClasses
-                        GeneralizedNewtypeDeriving
                         UndecidableInstances
 
 ghc-options: -O2
