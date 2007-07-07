@@ -1,24 +1,21 @@
 
 -------------------------------------------------------------------------
 -- |
--- Module : Control.Monad.Logic.Class
--- Copyright :
--- License   :
+-- Module      : Control.Monad.Logic.Class
+-- Copyright   : (c) Dan Doel
+-- License     : BSD3
 --
--- Maintainer :
--- Stability  : experimental
+-- Maintainer  : dan.doel@gmail.com
+-- Stability   : experimental
 -- Portability : non-portable (generalized newtype deriving)
 --
 -- A backtracking, logic programming monad.
 --
---    Inspired by the paper
+--    Adapted from the paper
 --    /Backtracking, Interleaving, and Terminating
 --        Monad Transformers/, by
 --    Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
 --    (<http://www.cs.rutgers.edu/~ccshan/logicprog/LogicT-icfp2005.pdf>)
---
---    Heavily adapted from the implementation here:
---    (<http://okmij.org/ftp/packages/LogicT.tar.gz>)
 -------------------------------------------------------------------------
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where

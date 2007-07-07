@@ -3,25 +3,22 @@
 
 -------------------------------------------------------------------------
 -- |
--- Module : Control.Monad.Logic
--- Copyright :
--- License   :
+-- Module      : Control.Monad.Logic
+-- Copyright   : (c) Dan Doel
+-- License     : BSD3
 --
--- Maintainer :
--- Stability  : experimental
+-- Maintainer  : dan.doel@gmail.com
+-- Stability   : experimental
 -- Portability : non-portable (generalized newtype deriving,
 --                              multi-parameter type classes)
 --
 -- A backtracking, logic programming monad.
 --
---    Inspired by the paper
+--    Adapted from the paper
 --    /Backtracking, Interleaving, and Terminating
 --        Monad Transformers/, by
 --    Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
 --    (<http://www.cs.rutgers.edu/~ccshan/logicprog/LogicT-icfp2005.pdf>).
---
---    Heavily adapted from the implementation here:
---    (<http://okmij.org/ftp/packages/LogicT.tar.gz>).
 -------------------------------------------------------------------------
 
 module Control.Monad.Logic (
@@ -66,7 +63,7 @@ type FK a = a
 
 -------------------------------------------------------------------------
 -- | A monad transformer for performing backtracking computations
---   layered over another monad 'm'
+-- layered over another monad 'm'
 newtype LogicT m a =
     LogicT { unLogicT :: forall ans. SK (m ans) a -> FK (m ans) -> m ans }
 
@@ -100,7 +97,7 @@ runLogicT = unLogicT
 
 -------------------------------------------------------------------------
 -- | The basic Logic monad, for performing backtracking computations
---   returning values of type 'a'
+-- returning values of type 'a'
 newtype Logic a = Logic { unLogic :: LogicT Identity a }
         deriving (Functor, Applicative, Alternative, Monad, MonadPlus, MonadLogic)
 
