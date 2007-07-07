@@ -97,26 +97,6 @@ class (MonadPlus m) => MonadLogic m where
     once m = do Just (a, _) <- msplit m
                 return a
 
-{-
-    -- Alternate implementation, from the paper.
-    interleave m1 m2 = do r <- msplit m1
-                          case r of
-                            Nothing       -> m2
-                            Just (a, m1') -> return a `mplus` interleave m2 m1'
-    m >>- f = do r <- msplit m
-                 case r of
-                   Nothing -> mzero
-                   Just (a, m') -> interleave (f a) (m' >>- f)
-    ifte t th el = do r <- msplit t
-                      case r of
-                        Nothing -> el
-                        Just (a, m) -> th a `mplus` (m >>= th)
-    once m = do r <- msplit m
-                case r of
-                  Nothing    -> mzero
-                  Just (a,_) -> return a
--}
-
 -------------------------------------------------------------------------------
 -- | The inverse of msplit. Satisfies the following law:
 --
