@@ -1,0 +1,10 @@
+Name:           logict
+Version:        0.1
+Description:    Continuation-based, backtracking, logic programming monad
+License:        BSD3
+License-File:   LICENSE
+Author:         Dan Doel
+Maintainer:     dan.doel@gmail.com
+Build-Depends:  base, mtl
+
+ghc-options: -O2
