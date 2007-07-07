@@ -99,7 +99,7 @@ runLogicT = unLogicT
 -- | The basic Logic monad, for performing backtracking computations
 -- returning values of type 'a'
 newtype Logic a = Logic { unLogic :: LogicT Identity a }
-        deriving (Functor, Applicative, Alternative, Monad, MonadPlus, MonadLogic)
+--        deriving (Functor, Applicative, Alternative, Monad, MonadPlus, MonadLogic)
 
 -------------------------------------------------------------------------
 -- | Extracts the first result from a Logic computation.
@@ -162,6 +162,30 @@ instance F.Foldable Logic where
 instance T.Traversable Logic where
     traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure mzero)
      where cons a l = return a `mplus` l
+
+-- haddock doesn't like generalized newtype deriving, so I'm writing
+-- instances by hand
+instance Functor Logic where
+    fmap f = Logic . fmap f . unLogic
+
+instance Applicative Logic where
+    pure = Logic . pure
+    f <*> a = Logic $ unLogic f <*> unLogic a
+
+instance Alternative Logic where
+    empty = Logic empty
+    a1 <|> a2 = Logic $ unLogic a1 <|> unLogic a2
+
+instance Monad Logic where
+    return = Logic . return
+    m >>= f = Logic $ unLogic m >>= unLogic . f
+
+instance MonadPlus Logic where
+    mzero = Logic mzero
+    m1 `mplus` m2 = Logic $ unLogic m1 `mplus` unLogic m2
+
+instance MonadLogic Logic where
+    msplit m = Logic . liftM (liftM (fmap Logic)) $ msplit (unLogic m)
 
 -- Needs undecidable instances
 instance (MonadReader r m) => MonadReader r (LogicT m) where
