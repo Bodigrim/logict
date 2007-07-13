@@ -177,6 +177,7 @@ instance Alternative Logic where
 instance Monad Logic where
     return = Logic . return
     m >>= f = Logic $ unLogic m >>= unLogic . f
+    fail   = Logic . fail
 
 instance MonadPlus Logic where
     mzero = Logic mzero
