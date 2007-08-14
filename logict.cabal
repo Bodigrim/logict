@@ -15,7 +15,7 @@ Maintainer:             dan.doel@gmail.com
 Homepage:               http://code.haskell.org/~dolio/logict
 Stability:              Experimental, based on paper
 Tested-With:            GHC
-Build-Depends:          base, mtl
+Build-Depends:          base, mtl>=1.0.1
 Exposed-Modules:        Control.Monad.Logic,
                         Control.Monad.Logic.Class
 Extensions:             MultiParamTypeClasses,
