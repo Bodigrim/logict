@@ -132,6 +132,18 @@ instance (MonadLogic m) => MonadLogic (StrictST.StateT s m) where
                             Just ((a,s'), m) ->
                                 return (Just (a, StrictST.StateT (\_ -> m)), s')
 
+    interleave ma mb = StrictST.StateT $ \s ->
+                        StrictST.runStateT ma s `interleave` StrictST.runStateT mb s
+
+    ma >>- f = StrictST.StateT $ \s ->
+                StrictST.runStateT ma s >>- \(a,s') -> StrictST.runStateT (f a) s'
+
+    ifte t th el = StrictST.StateT $ \s -> ifte (StrictST.runStateT t s)
+                                                (\(a,s') -> StrictST.runStateT (th a) s')
+                                                (StrictST.runStateT el s)
+
+    once ma = StrictST.StateT $ \s -> once (StrictST.runStateT ma s)
+
 instance (MonadLogic m) => MonadLogic (LazyST.StateT s m) where
     msplit sm = LazyST.StateT $ \s ->
                     do r <- msplit (LazyST.runStateT sm s)
@@ -139,6 +151,18 @@ instance (MonadLogic m) => MonadLogic (LazyST.StateT s m) where
                             Nothing -> return (Nothing, s)
                             Just ((a,s'), m) ->
                                 return (Just (a, LazyST.StateT (\_ -> m)), s')
+
+    interleave ma mb = LazyST.StateT $ \s ->
+                        LazyST.runStateT ma s `interleave` LazyST.runStateT mb s
+
+    ma >>- f = LazyST.StateT $ \s ->
+                LazyST.runStateT ma s >>- \(a,s') -> LazyST.runStateT (f a) s'
+
+    ifte t th el = LazyST.StateT $ \s -> ifte (LazyST.runStateT t s)
+                                              (\(a,s') -> LazyST.runStateT (th a) s')
+                                              (LazyST.runStateT el s)
+
+    once ma = LazyST.StateT $ \s -> once (LazyST.runStateT ma s)
 
 instance (MonadLogic m, Monoid w) => MonadLogic (StrictWT.WriterT w m) where
     msplit wm = StrictWT.WriterT $
@@ -148,6 +172,20 @@ instance (MonadLogic m, Monoid w) => MonadLogic (StrictWT.WriterT w m) where
                             Just ((a,w), m) ->
                                 return (Just (a, StrictWT.WriterT m), w)
 
+    interleave ma mb = StrictWT.WriterT $
+                        StrictWT.runWriterT ma `interleave` StrictWT.runWriterT mb
+
+    ma >>- f = StrictWT.WriterT $
+                StrictWT.runWriterT ma >>- \(a,w) ->
+                    StrictWT.runWriterT (StrictWT.tell w >> f a)
+
+    ifte t th el = StrictWT.WriterT $
+                    ifte (StrictWT.runWriterT t)
+                         (\(a,w) -> StrictWT.runWriterT (StrictWT.tell w >> th a))
+                         (StrictWT.runWriterT el)
+
+    once ma = StrictWT.WriterT $ once (StrictWT.runWriterT ma)
+
 instance (MonadLogic m, Monoid w) => MonadLogic (LazyWT.WriterT w m) where
     msplit wm = LazyWT.WriterT $
                     do r <- msplit (LazyWT.runWriterT wm)
@@ -155,3 +193,17 @@ instance (MonadLogic m, Monoid w) => MonadLogic (LazyWT.WriterT w m) where
                             Nothing -> return (Nothing, mempty)
                             Just ((a,w), m) ->
                                 return (Just (a, LazyWT.WriterT m), w)
+
+    interleave ma mb = LazyWT.WriterT $
+                        LazyWT.runWriterT ma `interleave` LazyWT.runWriterT mb
+
+    ma >>- f = LazyWT.WriterT $
+                LazyWT.runWriterT ma >>- \(a,w) ->
+                    LazyWT.runWriterT (LazyWT.tell w >> f a)
+
+    ifte t th el = LazyWT.WriterT $
+                    ifte (LazyWT.runWriterT t)
+                         (\(a,w) -> LazyWT.runWriterT (LazyWT.tell w >> th a))
+                         (LazyWT.runWriterT el)
+
+    once ma = LazyWT.WriterT $ once (LazyWT.runWriterT ma)
