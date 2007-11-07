@@ -1,5 +1,5 @@
 Name:                   logict
-Version:                0.2.2
+Version:                0.3
 Description:            A continuation-based, backtracking, logic programming monad.
                         An adaptation of the two-continuation implementation found
                         in the paper "Backtracking, Interleaving, and Terminating
@@ -13,12 +13,14 @@ Copyright:              Copyright (c) 2007, Dan Doel
 Author:                 Dan Doel
 Maintainer:             dan.doel@gmail.com
 Homepage:               http://code.haskell.org/~dolio/logict
-Stability:              Experimental, based on paper
+Stability:              Experimental
 Tested-With:            GHC
 Build-Depends:          base, mtl>=1.0.1
 Exposed-Modules:        Control.Monad.Logic,
                         Control.Monad.Logic.Class
 Extensions:             MultiParamTypeClasses,
-                        UndecidableInstances
+                        UndecidableInstances,
+                        Rank2Types,
+                        FlexibleInstances
 GHC-Options:            -O2
 
