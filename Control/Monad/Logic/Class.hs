@@ -20,8 +20,6 @@
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
-import Control.Monad
-
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
 

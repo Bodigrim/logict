@@ -159,7 +159,7 @@ instance F.Foldable Logic where
 
 instance T.Traversable Logic where
     traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure mzero)
-     where cons a l = return a `mplus` l
+     where cons a l' = return a `mplus` l'
 
 -- haddock doesn't like generalized newtype deriving, so I'm writing
 -- instances by hand
