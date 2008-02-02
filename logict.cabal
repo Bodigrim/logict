@@ -13,14 +13,17 @@ Copyright:              Copyright (c) 2007, Dan Doel
 Author:                 Dan Doel
 Maintainer:             dan.doel@gmail.com
 Homepage:               http://code.haskell.org/~dolio/logict
+
 Stability:              Experimental
 Tested-With:            GHC
 Build-Depends:          base, mtl>=1.0.1
+Build-Type:             Simple
+
 Exposed-Modules:        Control.Monad.Logic,
                         Control.Monad.Logic.Class
 Extensions:             MultiParamTypeClasses,
                         UndecidableInstances,
                         Rank2Types,
                         FlexibleInstances
-GHC-Options:            -O2
+GHC-Options:            -O2 -Wall
 
