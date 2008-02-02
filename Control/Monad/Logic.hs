@@ -1,7 +1,4 @@
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances, Rank2Types, FlexibleInstance, MultiParamTypeClasses #-}
 
 -------------------------------------------------------------------------
 -- |
