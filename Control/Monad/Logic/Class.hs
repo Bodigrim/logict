@@ -100,6 +100,11 @@ reflect :: MonadLogic m => Maybe (a, m a) -> m a
 reflect Nothing = mzero
 reflect (Just (a, m)) = return a `mplus` m
 
+-- | Inverts a logic computation. If @m@ succeeds with at least one value,
+-- @lnot m@ fails. If @m@ fails, then @lnot m@ succeeds the value @()@.
+lnot :: MonadLogic m => m a -> m ()
+lnot m = ifte (once m) (const mzero) (return ())
+
 -- An instance of MonadLogic for lists
 instance MonadLogic [] where
     msplit []     = return Nothing
