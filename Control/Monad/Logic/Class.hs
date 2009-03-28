@@ -18,7 +18,7 @@
 --    (<http://www.cs.rutgers.edu/~ccshan/logicprog/LogicT-icfp2005.pdf>)
 -------------------------------------------------------------------------
 
-module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
+module Control.Monad.Logic.Class (MonadLogic(..), reflect, lnot) where
 
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
