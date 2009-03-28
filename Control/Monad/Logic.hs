@@ -51,11 +51,6 @@ import qualified Data.Traversable as T
 
 import Control.Monad.Logic.Class
 
--- An Applicative instance for Identity, as MTL lacks one, currently
-instance Applicative Identity where
-    pure = Identity
-    (Identity f) <*> (Identity a) = Identity (f a)
-
 type SK r a = a -> r -> r
 type FK a = a
 
@@ -167,12 +162,14 @@ instance Functor Logic where
     fmap f = Logic . fmap f . unLogic
 
 instance Applicative Logic where
-    pure = Logic . pure
-    f <*> a = Logic $ unLogic f <*> unLogic a
+    pure = Logic . return
+    (Logic f) <*> (Logic a) = Logic . LogicT $ \sk fk ->
+      unLogicT f (\g fk' -> unLogicT a (sk . g) fk') fk
 
 instance Alternative Logic where
-    empty = Logic empty
-    a1 <|> a2 = Logic $ unLogic a1 <|> unLogic a2
+    empty = Logic . LogicT $ \_ fk -> fk
+    (Logic a1) <|> (Logic a2) = Logic . LogicT $ \sk fk ->
+      unLogicT a1 sk (unLogicT a2 sk fk)
 
 instance Monad Logic where
     return = Logic . return
