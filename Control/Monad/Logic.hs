@@ -22,13 +22,13 @@
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,
     -- * The Logic monad
-    Logic(),
+    Logic(..),
     runLogic,
     observe,
     observeMany,
     observeAll,
     -- * The LogicT monad transformer
-    LogicT(),
+    LogicT(..),
     runLogicT,
     observeT,
     observeManyT,
