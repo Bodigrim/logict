@@ -45,6 +45,7 @@ import Control.Monad.Trans
 
 import Control.Monad.Reader.Class
 import Control.Monad.State.Class
+import Control.Monad.Error.Class
 
 import qualified Data.Foldable as F
 import qualified Data.Traversable as T
@@ -193,3 +194,9 @@ instance (MonadState s m) => MonadState s (LogicT m) where
     get = lift get
     put = lift . put
 
+-- Needs undecidable instances
+instance (MonadError e m) => MonadError e (LogicT m) where
+  throwError = lift . throwError
+  catchError m h = LogicT $ \sk fk -> let
+      handle r = r `catchError` \e -> unLogicT (h e) sk fk
+    in handle $ unLogicT m (\a -> sk a . handle) fk
