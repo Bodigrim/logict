@@ -164,13 +164,13 @@ instance Functor Logic where
 
 instance Applicative Logic where
     pure = Logic . return
-    (Logic f) <*> (Logic a) = Logic . LogicT $ \sk fk ->
-      unLogicT f (\g fk' -> unLogicT a (sk . g) fk') fk
+    (Logic f) <*> (Logic a) = (Logic . LogicT) (\sk fk ->
+      unLogicT f (\g fk' -> unLogicT a (sk . g) fk') fk)
 
 instance Alternative Logic where
-    empty = Logic . LogicT $ \_ fk -> fk
-    (Logic a1) <|> (Logic a2) = Logic . LogicT $ \sk fk ->
-      unLogicT a1 sk (unLogicT a2 sk fk)
+    empty = (Logic . LogicT) (\_ fk -> fk)
+    (Logic a1) <|> (Logic a2) = (Logic . LogicT) (\sk fk ->
+      unLogicT a1 sk (unLogicT a2 sk fk))
 
 instance Monad Logic where
     return = Logic . return
