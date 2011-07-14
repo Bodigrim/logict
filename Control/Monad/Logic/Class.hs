@@ -1,4 +1,3 @@
-
 -------------------------------------------------------------------------
 -- |
 -- Module      : Control.Monad.Logic.Class
@@ -121,13 +120,13 @@ instance MonadLogic [] where
 -- computation. The results are similar for StateT. However, this is likely not
 -- an issue as most uses of msplit (all the ones in this library, at least) would
 -- not allow for that anyway.
-instance (MonadLogic m) => MonadLogic (ReaderT e m) where
+instance MonadLogic m => MonadLogic (ReaderT e m) where
     msplit rm = ReaderT $ \e -> do r <- msplit $ runReaderT rm e
                                    case r of
                                      Nothing -> return Nothing
                                      Just (a, m) -> return (Just (a, lift m))
 
-instance (MonadLogic m) => MonadLogic (StrictST.StateT s m) where
+instance MonadLogic m => MonadLogic (StrictST.StateT s m) where
     msplit sm = StrictST.StateT $ \s ->
                     do r <- msplit (StrictST.runStateT sm s)
                        case r of
@@ -147,7 +146,7 @@ instance (MonadLogic m) => MonadLogic (StrictST.StateT s m) where
 
     once ma = StrictST.StateT $ \s -> once (StrictST.runStateT ma s)
 
-instance (MonadLogic m) => MonadLogic (LazyST.StateT s m) where
+instance MonadLogic m => MonadLogic (LazyST.StateT s m) where
     msplit sm = LazyST.StateT $ \s ->
                     do r <- msplit (LazyST.runStateT sm s)
                        case r of
