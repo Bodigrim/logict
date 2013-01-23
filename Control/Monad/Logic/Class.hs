@@ -62,6 +62,7 @@ class (MonadPlus m) => MonadLogic m where
     --   be considered. (>>-) takes similar care to consider both branches of
     --   a disjunctive computation.
     (>>-)      :: m a -> (a -> m b) -> m b
+    infixl 1 >>-
 
     -- | Logical conditional. The equivalent of Prolog's soft-cut. If its
     --   first argument succeeds at all, then the results will be fed into
@@ -90,6 +91,7 @@ class (MonadPlus m) => MonadLogic m where
 
     once m = do Just (a, _) <- msplit m
                 return a
+
 
 -------------------------------------------------------------------------------
 -- | The inverse of msplit. Satisfies the following law:
