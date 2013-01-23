@@ -9,8 +9,8 @@ Synopsis:               A backtracking logic-programming monad.
 Category:               Control
 License:                BSD3
 License-File:           LICENSE
-Copyright:              Copyright (c) 2007-2010, Dan Doel,
-                        Copyright (c) 2011, Edward Kmett
+Copyright:              Copyright (c) 2007-2013, Dan Doel,
+                        Copyright (c) 2011-2013, Edward Kmett
 Author:                 Dan Doel
 Maintainer:             dan.doel@gmail.com
 Homepage:               http://code.haskell.org/~dolio/logict
