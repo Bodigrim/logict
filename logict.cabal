@@ -17,7 +17,7 @@ Homepage:               http://code.haskell.org/~dolio/logict
 
 Stability:              Experimental
 Tested-With:            GHC
-Build-Depends:          base >=2 && < 5, mtl>=1.0.1 && <2.3
+Build-Depends:          base >=2 && < 5, mtl>=2 && <2.3
 Build-Type:             Simple
 
 Exposed-Modules:        Control.Monad.Logic,
