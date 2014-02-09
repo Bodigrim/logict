@@ -1,30 +1,35 @@
-Name:                   logict
-Version:                0.6.0.2
-Description:            A continuation-based, backtracking, logic programming monad.
+name:                   logict
+version:                0.6.0.2
+description:            A continuation-based, backtracking, logic programming monad.
                         An adaptation of the two-continuation implementation found
                         in the paper "Backtracking, Interleaving, and Terminating
                         Monad Transformers" available here:
                         <http://okmij.org/ftp/papers/LogicT.pdf>
-Synopsis:               A backtracking logic-programming monad.
-Category:               Control
-License:                BSD3
-License-File:           LICENSE
-Copyright:              Copyright (c) 2007-2013, Dan Doel,
+synopsis:               A backtracking logic-programming monad.
+category:               Control
+license:                BSD3
+license-file:           LICENSE
+copyright:              Copyright (c) 2007-2014, Dan Doel,
                         Copyright (c) 2011-2013, Edward Kmett,
                         Copyright (c) 2014, Roman Cheplyaka
-Author:                 Dan Doel
-Maintainer:             dan.doel@gmail.com
-Homepage:               http://code.haskell.org/~dolio/logict
+author:                 Dan Doel
+maintainer:             dan.doel@gmail.com
+homepage:               http://code.haskell.org/~dolio/
+cabal-version:          >= 1.9.2
+tested-with:            GHC
+build-type:             Simple
 
-Stability:              Experimental
-Tested-With:            GHC
-Build-Depends:          base >=2 && < 5, mtl>=2 && <2.3
-Build-Type:             Simple
+source-repository head
+  type:     darcs
+  location: http://hub.darcs.net/dolio/logict
 
-Exposed-Modules:        Control.Monad.Logic,
-                        Control.Monad.Logic.Class
-Extensions:             MultiParamTypeClasses,
-                        UndecidableInstances,
-                        Rank2Types,
-                        FlexibleInstances
-GHC-Options:            -O2 -Wall
+library
+  build-depends:          base >=2 && < 5, mtl>=2 && <2.3
+
+  exposed-modules:        Control.Monad.Logic,
+                          Control.Monad.Logic.Class
+  extensions:             MultiParamTypeClasses,
+                          UndecidableInstances,
+                          Rank2Types,
+                          FlexibleInstances
+  ghc-options:            -O2 -Wall
