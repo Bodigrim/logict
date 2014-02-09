@@ -10,7 +10,8 @@ Category:               Control
 License:                BSD3
 License-File:           LICENSE
 Copyright:              Copyright (c) 2007-2013, Dan Doel,
-                        Copyright (c) 2011-2013, Edward Kmett
+                        Copyright (c) 2011-2013, Edward Kmett,
+                        Copyright (c) 2014, Roman Cheplyaka
 Author:                 Dan Doel
 Maintainer:             dan.doel@gmail.com
 Homepage:               http://code.haskell.org/~dolio/logict
