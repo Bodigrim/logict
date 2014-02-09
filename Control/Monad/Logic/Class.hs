@@ -84,12 +84,12 @@ class (MonadPlus m) => MonadLogic m where
     interleave m1 m2 = msplit m1 >>=
                         maybe m2 (\(a, m1') -> return a `mplus` interleave m2 m1')
 
-    m >>- f = do Just (a, m') <- msplit m
+    m >>- f = do (a, m') <- maybe mzero return =<< msplit m
                  interleave (f a) (m' >>- f)
 
     ifte t th el = msplit t >>= maybe el (\(a,m) -> th a `mplus` (m >>= th))
 
-    once m = do Just (a, _) <- msplit m
+    once m = do (a, _) <- maybe mzero return =<< msplit m
                 return a
 
 
