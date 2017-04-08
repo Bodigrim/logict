@@ -165,9 +165,12 @@ instance (MonadIO m) => MonadIO (LogicT m) where
     liftIO = lift . liftIO
 
 instance (Monad m) => MonadLogic (LogicT m) where
+    -- 'msplit' is quite costly even if the base 'Monad' is 'Identity'.
+    -- Try to avoid it.
     msplit m = lift $ unLogicT m ssk (return Nothing)
      where
      ssk a fk = return $ Just (a, (lift fk >>= reflect))
+    once m = LogicT $ \sk fk -> unLogicT m (\a _ -> sk a fk) fk
 
 instance (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
     foldMap f m = F.fold $ unLogicT m (liftM . mappend . f) (return mempty)
