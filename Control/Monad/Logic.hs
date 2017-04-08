@@ -120,7 +120,9 @@ observeAll = runIdentity . observeAllT
 -------------------------------------------------------------------------
 -- | Extracts up to a given number of results from a Logic computation.
 observeMany :: Int -> Logic a -> [a]
-observeMany i = runIdentity . observeManyT i
+observeMany i = take i . observeAll
+-- Implementing 'observeMany' using 'observeManyT' is quite costly,
+-- because it calls 'msplit' multiple times.
 
 -------------------------------------------------------------------------
 -- | Runs a Logic computation with the specified initial success and
