@@ -174,6 +174,10 @@ instance (Monad m) => MonadLogic (LogicT m) where
 
 instance (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
     foldMap f m = F.fold $ unLogicT m (liftM . mappend . f) (return mempty)
+{-# RULES
+"foldr [LogicT Identity]" forall (f::a->b->b) (z::b) (m::Logic a).
+  F.foldr f z m = runLogic m f z
+ #-}
 
 instance T.Traversable (LogicT Identity) where
     traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure mzero)
