@@ -19,7 +19,7 @@
 
 {-# LANGUAGE CPP #-}
 
-module Control.Monad.Logic.Class (MonadLogic(..), reflect, lnot) where
+module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
