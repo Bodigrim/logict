@@ -83,6 +83,10 @@ class (MonadPlus m) => MonadLogic m where
     --   such.
     once       :: m a -> m a
 
+    -- | Inverts a logic computation. If @m@ succeeds with at least one value,
+    -- @lnot m@ fails. If @m@ fails, then @lnot m@ succeeds the value @()@.
+    lnot :: m a -> m ()
+
     -- All the class functions besides msplit can be derived from msplit, if
     -- desired
     interleave m1 m2 = msplit m1 >>=
@@ -96,6 +100,8 @@ class (MonadPlus m) => MonadLogic m where
     once m = do (a, _) <- maybe mzero return =<< msplit m
                 return a
 
+    lnot m = ifte (once m) (const mzero) (return ())
+
 
 -------------------------------------------------------------------------------
 -- | The inverse of msplit. Satisfies the following law:
@@ -104,11 +110,6 @@ class (MonadPlus m) => MonadLogic m where
 reflect :: MonadLogic m => Maybe (a, m a) -> m a
 reflect Nothing = mzero
 reflect (Just (a, m)) = return a `mplus` m
-
--- | Inverts a logic computation. If @m@ succeeds with at least one value,
--- @lnot m@ fails. If @m@ fails, then @lnot m@ succeeds the value @()@.
-lnot :: MonadLogic m => m a -> m ()
-lnot m = ifte (once m) (const mzero) (return ())
 
 -- An instance of MonadLogic for lists
 instance MonadLogic [] where
