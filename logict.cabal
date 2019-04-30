@@ -25,6 +25,8 @@ source-repository head
 
 library
   build-depends:          base >=2 && < 5, mtl>=2 && <2.3
+  if impl(ghc < 8.0)
+    build-depends:        fail
 
   exposed-modules:        Control.Monad.Logic,
                           Control.Monad.Logic.Class
