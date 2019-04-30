@@ -1,4 +1,4 @@
-{-# LANGUAGE UndecidableInstances, Rank2Types, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE CPP, UndecidableInstances, Rank2Types, FlexibleInstances, MultiParamTypeClasses #-}
 
 -------------------------------------------------------------------------
 -- |
@@ -41,6 +41,7 @@ module Control.Monad.Logic (
 import Control.Applicative
 
 import Control.Monad
+import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity
 import Control.Monad.Trans
 
@@ -63,7 +64,11 @@ newtype LogicT m a =
 -------------------------------------------------------------------------
 -- | Extracts the first result from a LogicT computation,
 -- failing otherwise.
+#if !MIN_VERSION_base(4,13,0)
 observeT :: Monad m => LogicT m a -> m a
+#else
+observeT :: MonadFail m => LogicT m a -> m a
+#endif
 observeT lt = unLogicT lt (const . return) (fail "No answer.")
 
 -------------------------------------------------------------------------
@@ -103,7 +108,7 @@ logic f = LogicT $ \k -> Identity .
 -------------------------------------------------------------------------
 -- | Extracts the first result from a Logic computation.
 observe :: Logic a -> a
-observe = runIdentity . observeT 
+observe lt = runIdentity $ unLogicT lt (const . return) (error "No answer.")
 
 -------------------------------------------------------------------------
 -- | Extracts all results from a Logic computation.
@@ -138,6 +143,11 @@ instance Alternative (LogicT f) where
 instance Monad (LogicT m) where
     return a = LogicT $ \sk fk -> sk a fk
     m >>= f = LogicT $ \sk fk -> unLogicT m (\a fk' -> unLogicT (f a) sk fk') fk
+#if !MIN_VERSION_base(4,13,0)
+    fail = Fail.fail
+#endif
+
+instance Fail.MonadFail (LogicT m) where
     fail _ = LogicT $ \_ fk -> fk
 
 instance MonadPlus (LogicT m) where
