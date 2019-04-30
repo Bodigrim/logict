@@ -13,15 +13,15 @@ copyright:              Copyright (c) 2007-2014, Dan Doel,
                         Copyright (c) 2011-2013, Edward Kmett,
                         Copyright (c) 2014, Roman Cheplyaka
 author:                 Dan Doel
-maintainer:             dan.doel@gmail.com
-homepage:               http://code.haskell.org/~dolio/
+maintainer:             Andrew Lelechenko <andrew.lelechenko@gmail.com>
+homepage:               https://github.com/Bodigrim/logict#readme
 cabal-version:          >= 1.9.2
 tested-with:            GHC
 build-type:             Simple
 
 source-repository head
-  type:     darcs
-  location: http://hub.darcs.net/dolio/logict
+  type: git
+  location: https://github.com/Bodigrim/logict
 
 library
   build-depends:          base >=2 && < 5, mtl>=2 && <2.3
