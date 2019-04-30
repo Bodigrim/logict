@@ -18,6 +18,7 @@ homepage:               https://github.com/Bodigrim/logict#readme
 cabal-version:          >= 1.9.2
 tested-with:            GHC
 build-type:             Simple
+extra-source-files:     changelog.md
 
 source-repository head
   type: git
