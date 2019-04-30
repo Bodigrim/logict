@@ -1,0 +1,35 @@
+name:                   logict
+version:                0.6.0.2
+description:            A continuation-based, backtracking, logic programming monad.
+                        An adaptation of the two-continuation implementation found
+                        in the paper "Backtracking, Interleaving, and Terminating
+                        Monad Transformers" available here:
+                        <http://okmij.org/ftp/papers/LogicT.pdf>
+synopsis:               A backtracking logic-programming monad.
+category:               Control
+license:                BSD3
+license-file:           LICENSE
+copyright:              Copyright (c) 2007-2014, Dan Doel,
+                        Copyright (c) 2011-2013, Edward Kmett,
+                        Copyright (c) 2014, Roman Cheplyaka
+author:                 Dan Doel
+maintainer:             dan.doel@gmail.com
+homepage:               http://code.haskell.org/~dolio/
+cabal-version:          >= 1.9.2
+tested-with:            GHC
+build-type:             Simple
+
+source-repository head
+  type:     darcs
+  location: http://hub.darcs.net/dolio/logict
+
+library
+  build-depends:          base >=2 && < 5, mtl>=2 && <2.3
+
+  exposed-modules:        Control.Monad.Logic,
+                          Control.Monad.Logic.Class
+  extensions:             MultiParamTypeClasses,
+                          UndecidableInstances,
+                          Rank2Types,
+                          FlexibleInstances
+  ghc-options:            -O2 -Wall
