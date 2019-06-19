@@ -14,7 +14,7 @@
 --    /Backtracking, Interleaving, and Terminating
 --        Monad Transformers/, by
 --    Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
---    (<http://www.cs.rutgers.edu/~ccshan/logicprog/LogicT-icfp2005.pdf>)
+--    (<http://okmij.org/ftp/papers/LogicT.pdf>)
 -------------------------------------------------------------------------
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect, lnot) where
