@@ -177,7 +177,7 @@ instance T.Traversable (LogicT Identity) where
 -- Needs undecidable instances
 instance MonadReader r m => MonadReader r (LogicT m) where
     ask = lift ask
-    local f m = LogicT $ \sk fk -> unLogicT m ((local f .) . sk) (local f fk)
+    local f m = LogicT (\sk fk -> local f (unLogicT m sk fk))
 
 -- Needs undecidable instances
 instance MonadState s m => MonadState s (LogicT m) where
