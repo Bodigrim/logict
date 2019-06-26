@@ -17,6 +17,8 @@
 --    (<http://okmij.org/ftp/papers/LogicT.pdf>)
 -------------------------------------------------------------------------
 
+{-# LANGUAGE CPP #-}
+
 module Control.Monad.Logic.Class (MonadLogic(..), reflect, lnot) where
 
 import qualified Control.Monad.State.Lazy as LazyST
@@ -24,7 +26,9 @@ import qualified Control.Monad.State.Strict as StrictST
 
 import Control.Monad.Reader
 
+#if !MIN_VERSION_base(4,8,0)
 import Data.Monoid
+#endif
 import qualified Control.Monad.Writer.Lazy as LazyWT
 import qualified Control.Monad.Writer.Strict as StrictWT
 
