@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP, UndecidableInstances, Rank2Types, FlexibleInstances, MultiParamTypeClasses #-}
-
 -------------------------------------------------------------------------
 -- |
 -- Module      : Control.Monad.Logic
@@ -18,6 +16,8 @@
 --    Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
 --    (<http://okmij.org/ftp/papers/LogicT.pdf>).
 -------------------------------------------------------------------------
+
+{-# LANGUAGE CPP, UndecidableInstances, Rank2Types, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,
@@ -49,7 +49,9 @@ import Control.Monad.Reader.Class
 import Control.Monad.State.Class
 import Control.Monad.Error.Class
 
+#if !MIN_VERSION_base(4,8,0)
 import Data.Monoid (Monoid(mappend, mempty))
+#endif
 import qualified Data.Foldable as F
 import qualified Data.Traversable as T
 
