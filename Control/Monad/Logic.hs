@@ -59,7 +59,7 @@ import Control.Monad.Logic.Class
 
 -------------------------------------------------------------------------
 -- | A monad transformer for performing backtracking computations
--- layered over another monad 'm'
+-- layered over another monad @m@.
 newtype LogicT m a =
     LogicT { unLogicT :: forall r. (a -> m r -> m r) -> m r -> m r }
 
@@ -97,7 +97,7 @@ runLogicT = unLogicT
 
 -------------------------------------------------------------------------
 -- | The basic Logic monad, for performing backtracking computations
--- returning values of type 'a'
+-- returning values of type @a@.
 type Logic = LogicT Identity
 
 -------------------------------------------------------------------------

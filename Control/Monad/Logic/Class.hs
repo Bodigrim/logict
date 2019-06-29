@@ -116,23 +116,22 @@ instance MonadLogic [] where
     msplit []     = return Nothing
     msplit (x:xs) = return $ Just (x, xs)
 
--- Some of these may be questionable instances. Splitting a transformer does
--- not allow you to provide different input to the monadic object returned.
--- So, for instance, in:
+-- | Note that splitting a transformer does
+-- not allow you to provide different input
+-- to the monadic object returned.
+-- For instance, in:
 --
---  let Just (_, rm') = runReaderT (msplit rm) r
---   in runReaderT rm' r'
+-- > let Just (_, rm') = runReaderT (msplit rm) r in runReaderT rm' r'
 --
--- The "r'" parameter will be ignored, as "r" was already threaded through the
--- computation. The results are similar for StateT. However, this is likely not
--- an issue as most uses of msplit (all the ones in this library, at least) would
--- not allow for that anyway.
+-- @r'@ will be ignored, because @r@ was already threaded through the
+-- computation.
 instance MonadLogic m => MonadLogic (ReaderT e m) where
     msplit rm = ReaderT $ \e -> do r <- msplit $ runReaderT rm e
                                    case r of
                                      Nothing -> return Nothing
                                      Just (a, m) -> return (Just (a, lift m))
 
+-- | See note on splitting above.
 instance MonadLogic m => MonadLogic (StrictST.StateT s m) where
     msplit sm = StrictST.StateT $ \s ->
                     do r <- msplit (StrictST.runStateT sm s)
@@ -153,6 +152,7 @@ instance MonadLogic m => MonadLogic (StrictST.StateT s m) where
 
     once ma = StrictST.StateT $ \s -> once (StrictST.runStateT ma s)
 
+-- | See note on splitting above.
 instance MonadLogic m => MonadLogic (LazyST.StateT s m) where
     msplit sm = LazyST.StateT $ \s ->
                     do r <- msplit (LazyST.runStateT sm s)
