@@ -1,5 +1,5 @@
 name:                   logict
-version:                0.6.0.3
+version:                0.7.0.0
 description:            A continuation-based, backtracking, logic programming monad.
                         An adaptation of the two-continuation implementation found
                         in the paper "Backtracking, Interleaving, and Terminating
