@@ -173,12 +173,20 @@ instance (Monad m) => MonadLogic (LogicT m) where
     once m = LogicT $ \sk fk -> unLogicT m (\a _ -> sk a fk) fk
     lnot m = LogicT $ \sk fk -> unLogicT m (\_ _ -> fk) (sk () fk)
 
-instance (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
+#if MIN_VERSION_base(4,8,0)
+
+instance {-# OVERLAPPABLE #-} (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
     foldMap f m = F.fold $ unLogicT m (liftM . mappend . f) (return mempty)
-{-# RULES
-"foldr [LogicT Identity]" forall (f::a->b->b) (z::b) (m::Logic a).
-  F.foldr f z m = runLogic m f z
- #-}
+
+instance {-# OVERLAPPING #-} F.Foldable (LogicT Identity) where
+    foldr f z m = runLogic m f z
+
+#else
+
+instance {-# OVERLAPPABLE #-} (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
+    foldMap f m = F.fold $ unLogicT m (liftM . mappend . f) (return mempty)
+
+#endif
 
 instance T.Traversable (LogicT Identity) where
     traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure mzero)
