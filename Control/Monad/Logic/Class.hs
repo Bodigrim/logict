@@ -17,20 +17,11 @@
 --    (<http://okmij.org/ftp/papers/LogicT.pdf>)
 -------------------------------------------------------------------------
 
-{-# LANGUAGE CPP #-}
-
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
+import Control.Monad.Reader
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
-
-import Control.Monad.Reader
-
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid
-#endif
-import qualified Control.Monad.Writer.Lazy as LazyWT
-import qualified Control.Monad.Writer.Strict as StrictWT
 
 -------------------------------------------------------------------------------
 -- | Minimal implementation: msplit
@@ -172,47 +163,3 @@ instance MonadLogic m => MonadLogic (LazyST.StateT s m) where
                                               (LazyST.runStateT el s)
 
     once ma = LazyST.StateT $ \s -> once (LazyST.runStateT ma s)
-
-instance (MonadLogic m, Monoid w) => MonadLogic (StrictWT.WriterT w m) where
-    msplit wm = StrictWT.WriterT $
-                    do r <- msplit (StrictWT.runWriterT wm)
-                       case r of
-                            Nothing -> return (Nothing, mempty)
-                            Just ((a,w), m) ->
-                                return (Just (a, StrictWT.WriterT m), w)
-
-    interleave ma mb = StrictWT.WriterT $
-                        StrictWT.runWriterT ma `interleave` StrictWT.runWriterT mb
-
-    ma >>- f = StrictWT.WriterT $
-                StrictWT.runWriterT ma >>- \(a,w) ->
-                    StrictWT.runWriterT (StrictWT.tell w >> f a)
-
-    ifte t th el = StrictWT.WriterT $
-                    ifte (StrictWT.runWriterT t)
-                         (\(a,w) -> StrictWT.runWriterT (StrictWT.tell w >> th a))
-                         (StrictWT.runWriterT el)
-
-    once ma = StrictWT.WriterT $ once (StrictWT.runWriterT ma)
-
-instance (MonadLogic m, Monoid w) => MonadLogic (LazyWT.WriterT w m) where
-    msplit wm = LazyWT.WriterT $
-                    do r <- msplit (LazyWT.runWriterT wm)
-                       case r of
-                            Nothing -> return (Nothing, mempty)
-                            Just ((a,w), m) ->
-                                return (Just (a, LazyWT.WriterT m), w)
-
-    interleave ma mb = LazyWT.WriterT $
-                        LazyWT.runWriterT ma `interleave` LazyWT.runWriterT mb
-
-    ma >>- f = LazyWT.WriterT $
-                LazyWT.runWriterT ma >>- \(a,w) ->
-                    LazyWT.runWriterT (LazyWT.tell w >> f a)
-
-    ifte t th el = LazyWT.WriterT $
-                    ifte (LazyWT.runWriterT t)
-                         (\(a,w) -> LazyWT.runWriterT (LazyWT.tell w >> th a))
-                         (LazyWT.runWriterT el)
-
-    once ma = LazyWT.WriterT $ once (LazyWT.runWriterT ma)
