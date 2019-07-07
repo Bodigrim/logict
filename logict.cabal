@@ -31,7 +31,6 @@ library
   exposed-modules:
     Control.Monad.Logic
     Control.Monad.Logic.Class
-  extensions: MultiParamTypeClasses UndecidableInstances Rank2Types FlexibleInstances
   ghc-options: -O2 -Wall
   build-depends:
     base >=2 && <5,
