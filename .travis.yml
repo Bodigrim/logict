@@ -50,6 +50,7 @@ matrix:
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-2.4,ghc-7.4.2], sources: [hvr-ghc]}}
     - compiler: "ghc-7.0.4"
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-2.4,ghc-7.0.4], sources: [hvr-ghc]}}
+      env: TEST=--disable-tests
 
 before_install:
   - HC=/opt/ghc/bin/${CC}
@@ -65,7 +66,7 @@ before_install:
 install:
   - ${CABAL} --version
   - echo "$(${HC} --version) [$(${HC} --print-project-git-commit-id 2> /dev/null || echo '?')]"
-  - TEST=--enable-tests
+  - TEST=${TEST---enable-tests}
   - BENCH=--enable-benchmarks
   - GHCHEAD=${GHCHEAD-false}
   - travis_retry ${CABAL} update -v

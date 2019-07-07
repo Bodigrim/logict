@@ -39,3 +39,15 @@ library
   if impl(ghc <8.0)
     build-depends:
       fail -any
+
+test-suite logict-tests
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  ghc-options: -Wall
+  build-depends:
+    base >=2 && <5,
+    logict -any,
+    mtl >=2 && <2.3,
+    tasty,
+    tasty-hunit
+  hs-source-dirs: test
