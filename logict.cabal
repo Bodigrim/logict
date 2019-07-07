@@ -1,38 +1,42 @@
-name:                   logict
-version:                0.7.0.0
-description:            A continuation-based, backtracking, logic programming monad.
-                        An adaptation of the two-continuation implementation found
-                        in the paper "Backtracking, Interleaving, and Terminating
-                        Monad Transformers" available here:
-                        <http://okmij.org/ftp/papers/LogicT.pdf>
-synopsis:               A backtracking logic-programming monad.
-category:               Control
-license:                BSD3
-license-file:           LICENSE
-copyright:              Copyright (c) 2007-2014, Dan Doel,
-                        Copyright (c) 2011-2013, Edward Kmett,
-                        Copyright (c) 2014, Roman Cheplyaka
-author:                 Dan Doel
-maintainer:             Andrew Lelechenko <andrew.lelechenko@gmail.com>
-homepage:               https://github.com/Bodigrim/logict#readme
-cabal-version:          >= 1.9.2
-tested-with:            GHC
-build-type:             Simple
-extra-source-files:     changelog.md
+name: logict
+version: 0.7.0.0
+license: BSD3
+license-file: LICENSE
+copyright:
+  Copyright (c) 2007-2014, Dan Doel,
+  Copyright (c) 2011-2013, Edward Kmett,
+  Copyright (c) 2014, Roman Cheplyaka
+maintainer: Andrew Lelechenko <andrew.lelechenko@gmail.com>
+author: Dan Doel
+tested-with: ghc -any
+homepage: https://github.com/Bodigrim/logict#readme
+synopsis: A backtracking logic-programming monad.
+description:
+  A continuation-based, backtracking, logic programming monad.
+  An adaptation of the two-continuation implementation found
+  in the paper "Backtracking, Interleaving, and Terminating
+  Monad Transformers" available here:
+  <http://okmij.org/ftp/papers/LogicT.pdf>
+category: Control
+build-type: Simple
+extra-source-files:
+  changelog.md
+cabal-version: >=1.9.2
 
 source-repository head
   type: git
   location: https://github.com/Bodigrim/logict
 
 library
-  build-depends:          base >=2 && < 5, mtl>=2 && <2.3
-  if impl(ghc < 8.0)
-    build-depends:        fail
+  exposed-modules:
+    Control.Monad.Logic
+    Control.Monad.Logic.Class
+  extensions: MultiParamTypeClasses UndecidableInstances Rank2Types FlexibleInstances
+  ghc-options: -O2 -Wall
+  build-depends:
+    base >=2 && <5,
+    mtl >=2 && <2.3
 
-  exposed-modules:        Control.Monad.Logic,
-                          Control.Monad.Logic.Class
-  extensions:             MultiParamTypeClasses,
-                          UndecidableInstances,
-                          Rank2Types,
-                          FlexibleInstances
-  ghc-options:            -O2 -Wall
+  if impl(ghc <8.0)
+    build-depends:
+      fail -any
