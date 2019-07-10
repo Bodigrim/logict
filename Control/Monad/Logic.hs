@@ -191,7 +191,7 @@ instance {-# OVERLAPPING #-} F.Foldable (LogicT Identity) where
 
 #else
 
-instance {-# OVERLAPPABLE #-} (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
+instance (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
     foldMap f m = F.fold $ unLogicT m (liftM . mappend . f) (return mempty)
 
 #endif
