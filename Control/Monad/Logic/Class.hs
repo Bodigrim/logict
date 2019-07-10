@@ -17,7 +17,11 @@
 --    (<http://okmij.org/ftp/papers/LogicT.pdf>)
 -------------------------------------------------------------------------
 
+{-# LANGUAGE CPP  #-}
+
+#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
+#endif
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
