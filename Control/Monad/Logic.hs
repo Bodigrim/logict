@@ -17,7 +17,12 @@
 --    (<http://okmij.org/ftp/papers/LogicT.pdf>).
 -------------------------------------------------------------------------
 
-{-# LANGUAGE CPP, UndecidableInstances, Rank2Types, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE Safe                  #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,

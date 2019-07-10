@@ -17,6 +17,8 @@
 --    (<http://okmij.org/ftp/papers/LogicT.pdf>)
 -------------------------------------------------------------------------
 
+{-# LANGUAGE Safe #-}
+
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
 import Control.Monad.Reader
