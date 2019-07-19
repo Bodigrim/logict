@@ -1,3 +1,7 @@
+# 0.7.0.2
+
+* Add `Safe` pragmas.
+
 # 0.7.0.1
 
 * Fix `MonadReader r (LogicT m)` instance again.
