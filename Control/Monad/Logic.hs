@@ -58,8 +58,15 @@ import Control.Monad.State.Class
 import Control.Monad.Error.Class
 
 #if !MIN_VERSION_base(4,8,0)
-import Data.Monoid (Monoid(mappend, mempty))
+import Data.Monoid (Monoid (..))
 #endif
+
+#if MIN_VERSION_base(4,9,0)
+import Data.Semigroup (Semigroup (..))
+import Data.List (foldl')
+import qualified Data.List.NonEmpty as NE
+#endif
+
 import qualified Data.Foldable as F
 import qualified Data.Traversable as T
 
@@ -165,6 +172,17 @@ instance Fail.MonadFail (LogicT m) where
 instance MonadPlus (LogicT m) where
     mzero = LogicT $ \_ fk -> fk
     m1 `mplus` m2 = LogicT $ \sk fk -> unLogicT m1 sk (unLogicT m2 sk fk)
+
+#if MIN_VERSION_base(4,9,0)
+instance Semigroup (LogicT m a) where
+  (<>) = mplus
+  sconcat = foldr1 mplus
+#endif
+
+instance Monoid (LogicT m a) where
+  mempty = mzero
+  mappend = mplus
+  mconcat = foldr mplus mzero
 
 instance MonadTrans LogicT where
     lift m = LogicT $ \sk fk -> m >>= \a -> sk a fk
