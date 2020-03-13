@@ -11,9 +11,8 @@
 -- A backtracking, logic programming monad.
 --
 --    Adapted from the paper
---    /Backtracking, Interleaving, and Terminating
---        Monad Transformers/, by
---    Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
+--    /Backtracking, Interleaving, and Terminating Monad Transformers/,
+--    by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
 --    (<http://okmij.org/ftp/papers/LogicT.pdf>).
 -------------------------------------------------------------------------
 
