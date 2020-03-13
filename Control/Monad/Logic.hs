@@ -3,10 +3,7 @@
 -- Module      : Control.Monad.Logic
 -- Copyright   : (c) Dan Doel
 -- License     : BSD3
---
--- Maintainer  : dan.doel@gmail.com
--- Stability   : experimental
--- Portability : non-portable (multi-parameter type classes)
+-- Maintainer  : Andrew Lelechenko <andrew.lelechenko@gmail.com>
 --
 -- A backtracking, logic programming monad.
 --
