@@ -59,8 +59,6 @@ import Data.Monoid (Monoid (..))
 
 #if MIN_VERSION_base(4,9,0)
 import Data.Semigroup (Semigroup (..))
-import Data.List (foldl')
-import qualified Data.List.NonEmpty as NE
 #endif
 
 import qualified Data.Foldable as F
