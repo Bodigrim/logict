@@ -102,7 +102,7 @@ observeManyT n m
 -- | Runs a LogicT computation with the specified initial success and
 -- failure continuations.
 runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
-runLogicT = unLogicT
+runLogicT (LogicT r) = r
 
 -------------------------------------------------------------------------
 -- | The basic Logic monad, for performing backtracking computations
