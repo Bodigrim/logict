@@ -20,7 +20,7 @@ category: Control
 build-type: Simple
 extra-source-files:
   changelog.md
-cabal-version: >=1.9.2
+cabal-version: >=1.10
 tested-with: GHC ==7.4.2 GHC ==7.6.3 GHC ==7.8.4 GHC ==7.10.3 GHC ==8.0.2 GHC ==8.2.2 GHC ==8.4.4 GHC ==8.6.5 GHC ==8.8.3 GHC ==8.10.1
 
 source-repository head
@@ -31,6 +31,7 @@ library
   exposed-modules:
     Control.Monad.Logic
     Control.Monad.Logic.Class
+  default-language: Haskell2010
   ghc-options: -O2 -Wall
   build-depends:
     base >=2 && <5,
@@ -43,6 +44,7 @@ library
 test-suite logict-tests
   type: exitcode-stdio-1.0
   main-is: Test.hs
+  default-language: Haskell2010
   ghc-options: -Wall
   build-depends:
     base >=2 && <5,
