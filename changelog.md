@@ -1,3 +1,7 @@
+# 0.7.0.3
+
+* Support GHC 9.0.
+
 # 0.7.0.2
 
 * Add `Safe` pragmas.
