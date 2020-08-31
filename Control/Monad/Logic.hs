@@ -83,7 +83,7 @@ observeT :: MonadFail m => LogicT m a -> m a
 observeT lt = unLogicT lt (const . return) (fail "No answer.")
 
 -------------------------------------------------------------------------
--- | Extracts all results from a LogicT computation.
+-- | Tries to extract all results from a LogicT computation.
 observeAllT :: Monad m => LogicT m a -> m [a]
 observeAllT m = unLogicT m (liftM . (:)) (return [])
 
