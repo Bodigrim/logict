@@ -101,7 +101,7 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 -- @fmap (take 20) $ runExcept $ observeAllT nats@
 --
 -- In geteral, if the underlying monad manages control flow then 
--- @observeAllT@ may be unporductive under infinite branching,
+-- @observeAllT@ may be unproductive under infinite branching,
 -- and @observeManyT@ should be used instead.
 observeAllT :: Monad m => LogicT m a -> m [a]
 observeAllT m = unLogicT m (liftM . (:)) (return [])
