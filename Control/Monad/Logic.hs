@@ -98,7 +98,7 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 -- 
 -- but others (like @ExceptT@, and @ContT@) will not
 -- 
--- @fmap (take 20) $ runExcept $ observeAllT nats@
+-- >>> take 20 <$> runExcept (observeAllT nats)
 --
 -- In general, if the underlying monad manages control flow then 
 -- @observeAllT@ may be unproductive under infinite branching,
