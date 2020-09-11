@@ -83,9 +83,6 @@ observeT :: MonadFail m => LogicT m a -> m a
 observeT lt = unLogicT lt (const . return) (fail "No answer.")
 
 -------------------------------------------------------------------------
-<<<<<<< HEAD
--- | Tries to extract all results from a LogicT computation.
-=======
 -- | Extracts all results from a @LogicT@ computation, unless blocked by the
 -- underlying monad.
 --
@@ -106,7 +103,6 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 -- In geteral, if the underlying monad manages control flow then 
 -- @observeAllT@ may be unporductive under infinite branching,
 -- and @observeManyT@ should be used instead.
->>>>>>> master
 observeAllT :: Monad m => LogicT m a -> m [a]
 observeAllT m = unLogicT m (liftM . (:)) (return [])
 
