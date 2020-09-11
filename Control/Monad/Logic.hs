@@ -73,7 +73,7 @@ newtype LogicT m a =
     LogicT { unLogicT :: forall r. (a -> m r -> m r) -> m r -> m r }
 
 -------------------------------------------------------------------------
--- | Extracts the first result from a @LogicT@ computation,
+-- | Extracts the first result from a 'LogicT' computation,
 -- failing otherwise.
 #if !MIN_VERSION_base(4,13,0)
 observeT :: Monad m => LogicT m a -> m a
@@ -83,31 +83,31 @@ observeT :: MonadFail m => LogicT m a -> m a
 observeT lt = unLogicT lt (const . return) (fail "No answer.")
 
 -------------------------------------------------------------------------
--- | Extracts all results from a @LogicT@ computation, unless blocked by the
+-- | Extracts all results from a 'LogicT' computation, unless blocked by the
 -- underlying monad.
 --
 -- For example, given
 -- 
 -- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
 --
--- some monads (like @Identity@, @Reader@, @Writer@, and @State@)
+-- some monads (like 'Identity', 'Reader', 'Writer', and 'State')
 -- will be productive
 -- 
 -- >>> take 5 $ runIdentity $ observeAllT nats
 -- [0,1,2,3,4]
 -- 
--- but others (like @ExceptT@, and @ContT@) will not
+-- but others (like 'ExceptT', and 'ContT') will not
 -- 
 -- >>> take 20 <$> runExcept (observeAllT nats)
 --
 -- In general, if the underlying monad manages control flow then 
--- @observeAllT@ may be unproductive under infinite branching,
--- and @observeManyT@ should be used instead.
+-- 'observeAllT' may be unproductive under infinite branching,
+-- and 'observeManyT' should be used instead.
 observeAllT :: Monad m => LogicT m a -> m [a]
 observeAllT m = unLogicT m (liftM . (:)) (return [])
 
 -------------------------------------------------------------------------
--- | Extracts up to a given number of results from a @LogicT@ computation.
+-- | Extracts up to a given number of results from a 'LogicT' computation.
 observeManyT :: Monad m => Int -> LogicT m a -> m [a]
 observeManyT n m
     | n <= 0 = return []
@@ -118,9 +118,8 @@ observeManyT n m
  sk (Just (a, m')) _ = (a:) `liftM` observeManyT (n-1) m'
 
 -------------------------------------------------------------------------
--- | Runs a @LogicT@ computation with the specified initial success and
+-- | Runs a 'LogicT' computation with the specified initial success and
 -- failure continuations.
-
 runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
 runLogicT (LogicT r) = r
 
@@ -137,24 +136,24 @@ logic f = LogicT $ \k -> Identity .
                          runIdentity
 
 -------------------------------------------------------------------------
--- | Extracts the first result from a @Logic@ computation.
+-- | Extracts the first result from a 'Logic' computation.
 observe :: Logic a -> a
 observe lt = runIdentity $ unLogicT lt (const . return) (error "No answer.")
 
 -------------------------------------------------------------------------
--- | Extracts all results from a @Logic@ computation.
+-- | Extracts all results from a 'Logic' computation.
 observeAll :: Logic a -> [a]
 observeAll = runIdentity . observeAllT
 
 -------------------------------------------------------------------------
--- | Extracts up to a given number of results from a @Logic@ computation.
+-- | Extracts up to a given number of results from a 'Logic' computation.
 observeMany :: Int -> Logic a -> [a]
 observeMany i = take i . observeAll
 -- Implementing 'observeMany' using 'observeManyT' is quite costly,
 -- because it calls 'msplit' multiple times.
 
 -------------------------------------------------------------------------
--- | Runs a @Logic@ computation with the specified initial success and
+-- | Runs a 'Logic' computation with the specified initial success and
 -- failure continuations.
 runLogic :: Logic a -> (a -> r -> r) -> r -> r
 runLogic l s f = runIdentity $ unLogicT l si fi
