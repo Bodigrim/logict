@@ -121,11 +121,12 @@ observeManyT n m
 -- | Runs a 'LogicT' computation with the specified initial success and
 -- failure continuations.
 --
--- The second argument takes one result of the 'LogicT' computation
--- and the monad to run for any subsequent matches.
+-- The second argument ("success continuation") takes one result of
+-- the 'LogicT' computation and the monad to run for any subsequent
+-- matches.
 --
--- The third argument is called when the 'LogicT' cannot produce any
--- more results.
+-- The third argument ("failure continuation") is called when the
+-- 'LogicT' cannot produce any more results.
 --
 -- For example:
 --
@@ -185,6 +186,8 @@ observeAll = runIdentity . observeAllT
 
 -------------------------------------------------------------------------
 -- | Extracts up to a given number of results from a 'Logic' computation.
+--
+-- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
 --
 -- >>> observeMany 5 nats
 -- [0,1,2,3,4]
