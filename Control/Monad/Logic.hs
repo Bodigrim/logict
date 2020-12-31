@@ -88,7 +88,7 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 --
 -- For example, given
 -- 
--- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
+-- >>> let nats = return 0 `mplus` liftM (1 +) nats
 --
 -- some monads (like 'Identity', 'Reader', 'Writer', and 'State')
 -- will be productive
@@ -130,7 +130,7 @@ observeManyT n m
 --
 -- For example:
 --
--- >>> yieldWords l = if null l then mzero else return (head l) `mplus` yieldWords (tail l)
+-- >>> yieldWords = foldr (mplus . return) mzero
 --
 -- >>> showEach wrd nxt = putStrLn wrd >> nxt
 --
