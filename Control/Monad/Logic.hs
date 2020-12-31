@@ -74,7 +74,7 @@ newtype LogicT m a =
 
 -------------------------------------------------------------------------
 -- | Extracts the first result from a 'LogicT' computation,
--- failing otherwise.
+-- failing if there are no results at all.
 #if !MIN_VERSION_base(4,13,0)
 observeT :: Monad m => LogicT m a -> m a
 #else
@@ -120,6 +120,32 @@ observeManyT n m
 -------------------------------------------------------------------------
 -- | Runs a 'LogicT' computation with the specified initial success and
 -- failure continuations.
+--
+-- The second argument takes one result of the 'LogicT' computation
+-- and the monad to run for any subsequent matches.
+--
+-- The third argument is called when the 'LogicT' cannot produce any
+-- more results.
+--
+-- For example:
+--
+-- >>> yieldWords l = if null l then mzero else return (head l) `mplus` yieldWords (tail l)
+--
+-- >>> showEach wrd nxt = putStrLn wrd >> nxt
+--
+-- >>> runLogicT (yieldWords ["foo", "bar"]) showEach (putStrLn "none!")
+-- foo
+-- bar
+-- none!
+--
+-- >>> runLogicT (yieldWords []) showEach (putStrLn "none!")
+-- none!
+--
+-- >>> showFirst wrd _ = putStrLn wrd
+--
+-- >>> runLogicT (yieldWords ["foo", "bar"]) showFirst (putStrLn "none!")
+-- foo
+
 runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
 runLogicT (LogicT r) = r
 
@@ -136,17 +162,33 @@ logic f = LogicT $ \k -> Identity .
                          runIdentity
 
 -------------------------------------------------------------------------
--- | Extracts the first result from a 'Logic' computation.
+-- | Extracts the first result from a 'Logic' computation, failing if
+-- there are no results.
+--
+-- >>> observe (return 5 `mplus` return 3 `mplus` mzero)
+-- 5
+--
+-- >>> observe mzero
+-- *** Exception: No answer.
+--
 observe :: Logic a -> a
 observe lt = runIdentity $ unLogicT lt (const . return) (error "No answer.")
 
 -------------------------------------------------------------------------
 -- | Extracts all results from a 'Logic' computation.
+--
+-- >>> observe (return 5 `mplus` mzero `mplus` mzero `mplus` return 3 `mplus` mzero)
+-- [5,3]
+--
 observeAll :: Logic a -> [a]
 observeAll = runIdentity . observeAllT
 
 -------------------------------------------------------------------------
 -- | Extracts up to a given number of results from a 'Logic' computation.
+--
+-- >>> observeMany 5 nats
+-- [0,1,2,3,4]
+--
 observeMany :: Int -> Logic a -> [a]
 observeMany i = take i . observeAll
 -- Implementing 'observeMany' using 'observeManyT' is quite costly,
@@ -155,6 +197,13 @@ observeMany i = take i . observeAll
 -------------------------------------------------------------------------
 -- | Runs a 'Logic' computation with the specified initial success and
 -- failure continuations.
+--
+-- >>> runLogic mzero (+) 0
+-- 0
+--
+-- >>> runLogic (return 5 `mplus` return 3 `mplus` mzero) (+) 0
+-- 8
+--
 runLogic :: Logic a -> (a -> r -> r) -> r -> r
 runLogic l s f = runIdentity $ unLogicT l si fi
  where

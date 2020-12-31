@@ -55,7 +55,7 @@ class (MonadPlus m) => MonadLogic m where
     --
     --   > (mplus a b) >>= k = (a >>= k) `mplus` (b >>= k)
     --
-    --   If 'a >>= k' can backtrack arbitrarily many tmes, (b >>= k) may never
+    --   If 'a >>= k' can backtrack arbitrarily many times, (b >>= k) may never
     --   be considered. (>>-) takes similar care to consider both branches of
     --   a disjunctive computation.
     (>>-)      :: m a -> (a -> m b) -> m b
