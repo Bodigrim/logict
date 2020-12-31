@@ -88,7 +88,7 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 --
 -- For example, given
 -- 
--- >>> let nats = return 0 `mplus` liftM (1 +) nats
+-- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
 --
 -- some monads (like 'Identity', 'Reader', 'Writer', and 'State')
 -- will be productive
@@ -187,7 +187,7 @@ observeAll = runIdentity . observeAllT
 -------------------------------------------------------------------------
 -- | Extracts up to a given number of results from a 'Logic' computation.
 --
--- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
+-- >>> let nats = return 0 `mplus` liftM (1 +) nats
 --
 -- >>> observeMany 5 nats
 -- [0,1,2,3,4]
