@@ -37,9 +37,19 @@ monadReader3 = assertEqual "should be equal" [5,3] $
     plus5 = local (5+) ask
     plus3 = local (3+) ask
 
-nats, odds5down :: Monad m => LogicT m Integer
+nats, odds, oddsOrTwo,
+  oddsOrTwoUnfair, oddsOrTwoFair,
+  odds5down :: Monad m => LogicT m Integer
 
 nats = pure 0 `mplus` ((1 +) <$> nats)
+
+odds = return 1 `mplus` liftM (2+) odds
+
+oddsOrTwoUnfair = odds `mplus` return 2
+oddsOrTwoFair   = odds `interleave` return 2
+
+oddsOrTwo = do x <- oddsOrTwoFair
+               if even x then once (return x) else mzero
 
 odds5down = return 5 `mplus` mempty `mplus` mempty `mplus` return 3 `mplus` return 1
 
@@ -172,6 +182,201 @@ main = defaultMain $ testGroup "All"
         ]
       ]
 
+    , testGroup "fair disjunction"
+      [
+        testCase "some odds"          $ [1,3,5,7] @=? observeMany 4 odds
+      , testCase "unfair disjunction" $ [1,3,5,7] @=? observeMany 4 oddsOrTwoUnfair
+      , testCase "fair disjunction :: LogicT"   $ [1,2,3,5] @=? observeMany 4 oddsOrTwoFair
+      , testCase "fair termination"   $ [2] @=? observeT oddsOrTwo
+
+      , testCase "fair disjunction :: []" $ [1,2,3,5] @=?
+        (take 4 $ let oddsL = [ 1::Integer ] `mplus` [ o | o <- [3..], odd o ]
+                      oddsOrTwoLFair = oddsL `interleave` [2]
+                  in oddsOrTwoLFair)
+
+      , testCase "fair disjunction :: ReaderT" $ [1,2,3,5] @=?
+        (take 4 $ runReaderT (let oddsR = return 1 `mplus` liftM (2+) oddsR
+                              in oddsR `interleave` return (2 :: Integer)) "go")
+
+      , testCase "fair disjunction :: strict StateT" $ [1,2,3,5] @=?
+        (take 4 $ SS.evalStateT (let oddsS = return 1 `mplus` liftM (2+) oddsS
+                                  in oddsS `interleave` return (2 :: Integer)) "go")
+
+      , testCase "fair disjunction :: lazy StateT" $ [1,2,3,5] @=?
+        (take 4 $ SL.evalStateT (let oddsS = return 1 `mplus` liftM (2+) oddsS
+                                  in oddsS `interleave` return (2 :: Integer)) "go")
+      ]
+
+    , testGroup "fair conjunction" $
+      [
+        testCase "fair conjunction :: LogicT" $ [2,4,6,8] @=?
+        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                       do x <- (return 0 `mplus` return 1) >>- oddsPlus
+                          if even x then return x else mzero
+                      )
+
+      , testCase "fair conjunction :: []" $ [2,4,6,8] @=?
+        (take 4 $ let oddsL = [ 1 :: Integer ] `mplus` [ o | o <- [3..], odd o ]
+                      oddsPlus n = [ a + n | a <- oddsL ]
+                  in do x <- [0] `mplus` [1] >>- oddsPlus
+                        if even x then return x else mzero
+        )
+
+      , testCase "fair conjunction :: ReaderT" $ [2,4,6,8] @=?
+        (take 4 $ runReaderT (let oddsR = return (1 :: Integer) `mplus` liftM (2+) oddsR
+                                  oddsPlus n = oddsR >>= \a -> return (a + n)
+                              in do x <- (return 0 `mplus` return 1) >>- oddsPlus
+                                    if even x then return x else mzero
+                             ) "env")
+
+      , testCase "fair conjunction :: strict StateT" $ [2,4,6,8] @=?
+        (take 4 $ SS.evalStateT (let oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+                                     oddsPlus n = oddsS >>= \a -> return (a + n)
+                                 in do x <- (return 0 `mplus` return 1) >>- oddsPlus
+                                       if even x then return x else mzero
+                                ) "state")
+
+      , testCase "fair conjunction :: lazy StateT" $ [2,4,6,8] @=?
+        (take 4 $ SL.evalStateT (let oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+                                     oddsPlus n = oddsS >>= \a -> return (a + n)
+                                 in do x <- (return 0 `mplus` return 1) >>- oddsPlus
+                                       if even x then return x else mzero
+                                ) "env")
+      ]
+
+    , testGroup "ifte logical conditional (soft-cut)"
+    [
+      -- Initial example returns all odds which are divisible by
+      -- another number.  Nothing special is needed to implement this.
+      let iota n = msum (map return [1..n])
+          oc = do n <- odds
+                  guard (n > 1)
+                  d <- iota (n - 1)
+                  guard (d > 1 && n `mod` d == 0)
+                  return n
+      in testCase "divisible odds" $ [9,15,15,21,21,25,27,27,33,33] @=?
+         observeMany 10 oc
+
+      -- To get the inverse: all odds which are *not* divisible by
+      -- another number, the "soft cut" or "negation as finite
+      -- failure" is needed to force another logic rule when the
+      -- current one fails.  This is provided by logict as the 'ifte' operator.
+
+    , let iota n = msum (map return [1..n])
+          oc = do n <- odds
+                  guard (n > 1)
+                  ifte (do d <- iota (n - 1)
+                           guard (d > 1 && n `mod` d == 0))
+                    (const mzero)
+                    (return n)
+      in testCase "indivisible odds :: LogicT" $ [3,5,7,11,13,17,19,23,29,31] @=?
+         observeMany 10 oc
+
+    , let iota n = [1..n]
+          oddsL = [ 1 :: Integer ] `mplus` [ o | o <- [3..], odd o ]
+          oc = [ n
+               | n <- oddsL
+               , (n > 1)
+               ] >>= \n -> ifte (do d <- iota (n - 1)
+                                    guard (d > 1 && n `mod` d == 0))
+                           (const mzero)
+                           (return n)
+      in testCase "indivisible odds :: []" $ [3,5,7,11,13,17,19,23,29,31] @=?
+         take 10 oc
+
+    , let iota n = msum (map return [1..n])
+          oddsR = return (1 :: Integer) `mplus` liftM (2+) oddsR
+          oc = do n <- oddsR
+                  guard (n > 1)
+                  ifte (do d <- iota (n - 1)
+                           guard (d > 1 && n `mod` d == 0))
+                    (const mzero)
+                    (return n)
+      in testCase "indivisible odds :: ReaderT" $ [3,5,7,11,13,17,19,23,29,31] @=?
+         (take 10 $ runReaderT oc "env")
+
+    , let iota n = msum (map return [1..n])
+          oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+          oc = do n <- oddsS
+                  guard (n > 1)
+                  ifte (do d <- iota (n - 1)
+                           guard (d > 1 && n `mod` d == 0))
+                    (const mzero)
+                    (return n)
+      in testCase "indivisible odds :: strict StateT" $ [3,5,7,11,13,17,19,23,29,31] @=?
+         (take 10 $ SS.evalStateT oc "state")
+
+    , let iota n = msum (map return [1..n])
+          oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+          oc = do n <- oddsS
+                  guard (n > 1)
+                  ifte (do d <- iota (n - 1)
+                           guard (d > 1 && n `mod` d == 0))
+                    (const mzero)
+                    (return n)
+      in testCase "indivisible odds :: strict StateT" $ [3,5,7,11,13,17,19,23,29,31] @=?
+         (take 10 $ SL.evalStateT oc "state")
+
+    ]
+
+    , testGroup "once (pruning)" $
+      -- the pruning primitive 'once' selects (non-deterministically)
+      -- a single candidate from many results and disables any further
+      -- backtracking on this choice.
+
+      let bogosort l = do p <- permute l
+                          if sorted p then return p else mzero
+
+          sorted (e:e':r) = e <= e' && sorted (e':r)
+          sorted _        = True
+
+          permute []      = return []
+          permute (h:t)   = do { t' <- permute t; insert h t' }
+
+          insert e []      = return [e]
+          insert e l@(h:t) = return (e:l) `mplus`
+                             do { t' <- insert e t; return (h : t') }
+
+          inp = [5,0,3,4,0,1 :: Integer]
+      in
+        [
+          -- without pruning, get two results because 0 appears twice
+          testCase "no pruning" $ [[0,0,1,3,4,5], [0,0,1,3,4,5]] @=?
+          observeAll (bogosort inp)
+
+          -- with pruning, stops after the first result
+        , testCase "with pruning" $ [[0,0,1,3,4,5]] @=?
+          observeAll (once (bogosort inp))
+        ]
+    ]
+
+  , testGroup "lnot (inversion)" $
+    let isEven n = if even n then return n else mzero in
+    [
+      testCase "inversion :: LogicT" $ [1,3,5,7,9] @=?
+      observeMany 5 (do v <- foldr (mplus . return) mzero [(1::Integer)..]
+                        lnot (isEven v)
+                        return v)
+
+    , testCase "inversion :: []" $ [1,3,5,7,9] @=?
+      (take 5 $ do v <- [(1::Integer)..]
+                   lnot (isEven v)
+                   return v)
+
+    , testCase "inversion :: ReaderT" $ [1,3,5,7,9] @=?
+      (take 5 $ runReaderT (do v <- foldr (mplus . return) mzero [(1::Integer)..]
+                               lnot (isEven v)
+                               return v) "env")
+
+    , testCase "inversion :: strict StateT" $ [1,3,5,7,9] @=?
+      (take 5 $ SS.evalStateT (do v <- foldr (mplus . return) mzero [(1::Integer)..]
+                                  lnot (isEven v)
+                                  return v) "state")
+
+    , testCase "inversion :: lazy StateT" $ [1,3,5,7,9] @=?
+      (take 5 $ SL.evalStateT (do v <- foldr (mplus . return) mzero [(1::Integer)..]
+                                  lnot (isEven v)
+                                  return v) "state")
     ]
   ]
 
