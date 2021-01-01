@@ -84,7 +84,7 @@ class (MonadPlus m) => MonadLogic m where
     --   times" means that the computation is resulting in 'mzero' and
     --   that @a@ has an infinite number of 'mplus' applications to
     --   return to.  This is called a conjunctive computation because
-    --   the logic for @a@ *and* @k@ must both succeed (i.e. 'return'
+    --   the logic for @a@ /and/ @k@ must both succeed (i.e. 'return'
     --   a value instead of 'mzero').
     --
     --   Similar to the way 'interleave' allows both branches of a
@@ -100,11 +100,12 @@ class (MonadPlus m) => MonadLogic m where
     --   > do x <- (return 0 `mplus` return 1) >>= oddsPlus
     --   >    if even x then return x else mzero
     --
-    --   This will never produce any values because all values come
-    --   from the @return 1@ driven operation, but the @return 0@ driven
-    --   operation generates an infinite number of potential results.
-    --   Using 'interleave' here instead of 'mplus' does not help due
-    --   to the MonadPlus distributivity law.
+    --   This will never produce any value because all values come
+    --   from the @return 1@ driven operation, but the @return 0@
+    --   driven operation generates an infinite number of potential
+    --   results.  Using 'interleave' here instead of 'mplus' does not
+    --   help due to the MonadPlus distributivity "Left Distribution"
+    --   law noted above (see https://wiki.haskell.org/MonadPlus).
     --
     --   Also note that the @do@ notation desugars to '>>=' bind
     --   operations, so the following would also fail:
