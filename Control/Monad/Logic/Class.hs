@@ -45,19 +45,56 @@ class (MonadPlus m) => MonadLogic m where
     --   > do x <- odds `mplus` return 2
     --   >    if even x then return x else mzero
     --
-    --   Such a computation may never consider the 'return 2', and will
-    --   therefore never terminate. By contrast, interleave ensures fair
-    --   consideration of both branches of a disjunction
+    --   Such a computation may never consider the @return 2@, and
+    --   will therefore never return any results. By contrast, using
+    --   'interleave' in place of 'mplus' ensures fair consideration
+    --   of both branches of a disjunction.
+    --
+    --   Note that this sample computation will never terminate: only
+    --   the first value can be safely observed, after which each odd
+    --   value becomes 'mzero' (equivalent to a Prologue @fail@) which
+    --   does not stop the evaluation but indicates there is no value
+    --   to return yet.
+    --
     interleave :: m a -> m a -> m a
 
     -- | Fair conjunction. Similarly to the previous function, consider
-    --   the distributivity law for MonadPlus:
+    --   the distributivity law for 'MonadPlus':
     --
     --   > (mplus a b) >>= k = (a >>= k) `mplus` (b >>= k)
     --
-    --   If 'a >>= k' can backtrack arbitrarily many times, (b >>= k) may never
-    --   be considered. (>>-) takes similar care to consider both branches of
-    --   a disjunctive computation.
+    --   If @(a >>= k)@ can backtrack arbitrarily many times, @(b >>=
+    --   k)@ may never be considered. The '>>-' operator takes similar
+    --   care to consider both branches of a disjunctive computation.
+    --
+    --   Consider the operation:
+    --
+    --   > odds = return 1 `mplus` liftM (2+) odds
+    --   >
+    --   > oddsPlus n = odds >>= \a -> return (a + n)
+    --   >
+    --   > do x <- (return 0 `mplus` return 1) >>= oddsPlus
+    --   >    if even x then return x else mzero
+    --
+    --   This will never produce any values because all values come
+    --   from the @return 1@ driven operation, but the @return 0@ driven
+    --   operation generates an infinite number of potential results.
+    --   Using 'interleave' here instead of 'mplus' does not help due
+    --   to the MonadPlus distributivity law.
+    --
+    --   Also note that the @do@ notation desugars to '>>=' bind
+    --   operations, so the following would also fail:
+    --
+    --   > do a <- return 0 `mplus` return 1
+    --   >    x <- oddsPlus a
+    --   >    if even x then return x else mzero
+    --
+    --   Use the '>>-' in place of the normal monadic bind operation
+    --   '>>=' like so:
+    --
+    --   > do x <- (return 0 `mplus` return 1) >>- oddsPlus
+    --   >    if even x then return x else mzero
+    --
     (>>-)      :: m a -> (a -> m b) -> m b
     infixl 1 >>-
 
@@ -77,7 +114,7 @@ class (MonadPlus m) => MonadLogic m where
     once       :: m a -> m a
 
     -- | Inverts a logic computation. If @m@ succeeds with at least one value,
-    -- @lnot m@ fails. If @m@ fails, then @lnot m@ succeeds the value @()@.
+    --   @lnot m@ fails. If @m@ fails, then @lnot m@ succeeds with the value @()@.
     lnot :: m a -> m ()
 
     -- All the class functions besides msplit can be derived from msplit, if
