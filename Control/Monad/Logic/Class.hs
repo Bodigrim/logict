@@ -107,7 +107,7 @@ class (MonadPlus m) => MonadLogic m where
     --   driven operation generates an infinite number of potential
     --   results.  Using 'interleave' here instead of 'mplus' does not
     --   help due to the MonadPlus distributivity "Left Distribution"
-    --   law noted above (see https://wiki.haskell.org/MonadPlus).
+    --   law noted above (see <https://wiki.haskell.org/MonadPlus>).
     --
     --   Also note that the @do@ notation desugars to '>>=' bind
     --   operations, so the following would also fail:
