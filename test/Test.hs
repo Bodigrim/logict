@@ -3,6 +3,7 @@
 module Main where
 
 import           Test.Tasty
+import           Test.Tasty.ExpectedFailure
 import           Test.Tasty.HUnit
 
 import           Control.Exception
@@ -60,7 +61,9 @@ yieldWords = go
 
 
 main :: IO ()
-main = defaultMain $ testGroup "All"
+main = defaultMain $
+  localOption (mkTimeout 1000000) $  -- 1 second
+  testGroup "All"
   [ testGroup "Monad Reader + env"
     [ testCase "Monad Reader 1" monadReader1
     , testCase "Monad Reader 2" monadReader2
@@ -184,8 +187,14 @@ main = defaultMain $ testGroup "All"
 
     , testGroup "fair disjunction"
       [
+        -- base case
         testCase "some odds"          $ [1,3,5,7] @=? observeMany 4 odds
+
+        -- without fairness, the second producer is never considered
       , testCase "unfair disjunction" $ [1,3,5,7] @=? observeMany 4 oddsOrTwoUnfair
+
+        -- with fairness, the results are interleaved
+
       , testCase "fair disjunction :: LogicT"   $ [1,2,3,5] @=? observeMany 4 oddsOrTwoFair
       , testCase "fair termination"   $ [2] @=? observeT oddsOrTwo
 
@@ -209,7 +218,18 @@ main = defaultMain $ testGroup "All"
 
     , testGroup "fair conjunction" $
       [
-        testCase "fair conjunction :: LogicT" $ [2,4,6,8] @=?
+        -- unfair conjunction does not terminate or produce any
+        -- values: this will fail (expectedly) due to a timeout
+
+        expectFail $ testCase "unfair conjunction" $ [2,4,6,8] @=?
+        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                       do x <- (return 0 `mplus` return 1) >>= oddsPlus
+                          if even x then return x else mzero
+                      )
+
+        -- Using the fair conjunction operator (>>-) the test produces values
+
+      , testCase "fair conjunction :: LogicT" $ [2,4,6,8] @=?
         observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
                        do x <- (return 0 `mplus` return 1) >>- oddsPlus
                           if even x then return x else mzero
@@ -248,6 +268,7 @@ main = defaultMain $ testGroup "All"
     [
       -- Initial example returns all odds which are divisible by
       -- another number.  Nothing special is needed to implement this.
+
       let iota n = msum (map return [1..n])
           oc = do n <- odds
                   guard (n > 1)
@@ -258,9 +279,25 @@ main = defaultMain $ testGroup "All"
          observeMany 10 oc
 
       -- To get the inverse: all odds which are *not* divisible by
-      -- another number, the "soft cut" or "negation as finite
-      -- failure" is needed to force another logic rule when the
-      -- current one fails.  This is provided by logict as the 'ifte' operator.
+      -- another number, the guard test cannot simply be reversed:
+      -- there are many produced values that are not divisors, but
+      -- some that are:
+
+    , let iota n = msum (map return [1..n])
+          oc = do n <- odds
+                  guard (n > 1)
+                  d <- iota (n - 1)
+                  guard (d > 1 && n `mod` d /= 0)
+                  return n
+      in testCase "indivisible odds, wrong" $
+         [3,5,5,5,7,7,7,7,7,9] @=?
+         observeMany 10 oc
+
+      -- For the inverse logic to work correctly, it should return
+      -- values only when there are *no* divisors at all.  This can be
+      -- done using the "soft cut" or "negation as finite failure" to
+      -- needed to fail the current solution entirely.  This is
+      -- provided by logict as the 'ifte' operator.
 
     , let iota n = msum (map return [1..n])
           oc = do n <- odds

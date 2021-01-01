@@ -51,5 +51,6 @@ test-suite logict-tests
     logict -any,
     mtl >=2 && <2.3,
     tasty,
-    tasty-hunit
+    tasty-hunit,
+    tasty-expected-failure >= 0.12 && < 0.13
   hs-source-dirs: test
