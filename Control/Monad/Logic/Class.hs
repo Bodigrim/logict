@@ -50,11 +50,11 @@ class (MonadPlus m) => MonadLogic m where
     --   'interleave' in place of 'mplus' ensures fair consideration
     --   of both branches of a disjunction.
     --
-    --   Note that this sample computation will never terminate: only
-    --   the first value can be safely observed, after which each odd
-    --   value becomes 'mzero' (equivalent to a Prologue @fail@) which
-    --   does not stop the evaluation but indicates there is no value
-    --   to return yet.
+    --   Note that even with 'interleave' this computation will never
+    --   terminate after returning 2: only the first value can be
+    --   safely observed, after which each odd value becomes 'mzero'
+    --   (equivalent to a Prolog @fail@) which does not stop the
+    --   evaluation but indicates there is no value to return yet.
     --
     interleave :: m a -> m a -> m a
 
@@ -64,8 +64,32 @@ class (MonadPlus m) => MonadLogic m where
     --   > (mplus a b) >>= k = (a >>= k) `mplus` (b >>= k)
     --
     --   If @(a >>= k)@ can backtrack arbitrarily many times, @(b >>=
-    --   k)@ may never be considered. The '>>-' operator takes similar
-    --   care to consider both branches of a disjunctive computation.
+    --   k)@ may never be considered. In logic statements,
+    --   "backtracking" is the process of discarding the current
+    --   possible solution value and returning to a previous decision
+    --   point where a new value can be obtained and tried.  For
+    --   example:
+    --
+    --   >>> do number <- return 0 `mplus` return 1 `mplus` return 2
+    --   >>>    if even x then return x else mzero
+    --   [0,2]
+    --
+    --   Here, the @number@ value can be produced three times, where
+    --   the 'mplus' represents the decision points of that
+    --   production.  The subsequent @if@ statement specifies 'mzero' (fail)
+    --   if the number is odd, causing it to be discarded and a return
+    --   to an 'mplus' decision point to get the next @number@.
+    --
+    --   The statement @(a >>= k)@ "can backtrack arbitrarily many
+    --   times" means that the computation is resulting in 'mzero' and
+    --   that @a@ has an infinite number of 'mplus' applications to
+    --   return to.  This is called a conjunctive computation because
+    --   the logic for @a@ *and* @k@ must both succeed (i.e. 'return'
+    --   a value instead of 'mzero').
+    --
+    --   Similar to the way 'interleave' allows both branches of a
+    --   disjunctive computation, the '>>-' operator takes care to
+    --   consider both branches of a conjunctive computation.
     --
     --   Consider the operation:
     --
