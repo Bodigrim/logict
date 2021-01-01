@@ -196,7 +196,21 @@ main = defaultMain $
         -- with fairness, the results are interleaved
 
       , testCase "fair disjunction :: LogicT"   $ [1,2,3,5] @=? observeMany 4 oddsOrTwoFair
-      , testCase "fair termination"   $ [2] @=? observeT oddsOrTwo
+
+        -- without fairness nothing would be produced, but with
+        -- fairness, a production is obtained
+
+      , testCase "fair production"   $ [2] @=? observeT oddsOrTwo
+
+        -- however, asking for additional productions will not
+        -- terminate (there are none, since the first clause generates
+        -- an infinity of mzero "failures")
+
+      , expectFail $ testCase "nontermination even when fair" $
+        [[2]] @=? observeManyT 2 oddsOrTwo
+
+        -- Validate fair disjunction works for other
+        -- Control.Monad.Logic.Class instances
 
       , testCase "fair disjunction :: []" $ [1,2,3,5] @=?
         (take 4 $ let oddsL = [ 1::Integer ] `mplus` [ o | o <- [3..], odd o ]
