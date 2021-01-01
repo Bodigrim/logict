@@ -53,8 +53,10 @@ class (MonadPlus m) => MonadLogic m where
     --   Note that even with 'interleave' this computation will never
     --   terminate after returning 2: only the first value can be
     --   safely observed, after which each odd value becomes 'mzero'
-    --   (equivalent to a Prolog @fail@) which does not stop the
-    --   evaluation but indicates there is no value to return yet.
+    --   (equivalent to a Prolog @fail@, see
+    --   <http://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse45>)
+    --   which does not stop the evaluation but indicates there is no
+    --   value to return yet.
     --
     interleave :: m a -> m a -> m a
 
