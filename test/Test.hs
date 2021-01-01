@@ -59,16 +59,24 @@ main = defaultMain $ testGroup "All"
 
   , testGroup "Various monads"
     [
+      -- nats will generate an infinite number of results; demonstrate
+      -- various ways of observing them via Logic/LogicT
       testCase "runIdentity all"  $ [0..4] @=? (take 5 $ runIdentity $ observeAllT nats)
     , testCase "runIdentity many" $ [0..4] @=? (runIdentity $ observeManyT 5 nats)
     , testCase "observeAll"       $ [0..4] @=? (take 5 $ observeAll nats)
     , testCase "observeMany"      $ [0..4] @=? (observeMany 5 nats)
+
+    -- Ensure LogicT can be run over other base monads other than
+    -- List.  Some are productive (Reader) and some are non-productive
+    -- (Except) in the observeAll case.
 
     , testCase "runReader" $ [0..4] @=? (take 5 $ runReader (observeAllT nats) "!")
 
     , testCase "manyT runExceptT" $ [0..4] @=?
       (fromRight [] $ runExcept (observeManyT 5 nats))
     ]
+
+  --------------------------------------------------
 
   , testGroup "Control.Monad.Logic tests"
     [
@@ -96,27 +104,31 @@ main = defaultMain $ testGroup "All"
     , testCase "observeMany none" $ ([] :: [Integer]) @=? observeMany 2 mzero
     ]
 
+  --------------------------------------------------
+
   , testGroup "Control.Monad.Logic.Class tests"
     [
       testGroup "msplit laws"
       [
         testGroup "msplit mzero == return Nothing"
         [
-          testCase "msplit mzero == return Nothing :: []" $
+          testCase "msplit mzero :: []" $
           msplit mzero @=? return (Nothing :: Maybe (String, [String]))
-        , testCase "msplit mzero == return Nothing :: ReaderT" $
+
+        , testCase "msplit mzero :: ReaderT" $
           let z :: ReaderT Int [] String
               z = mzero
           in assertBool "ReaderT" $ null $ catMaybes $ runReaderT (msplit z) 0
-        , testCase "msplit mzero == return Nothing :: LogicT" $
+
+        , testCase "msplit mzero :: LogicT" $
           let z :: LogicT [] String
               z = mzero
           in assertBool "LogicT" $ null $ catMaybes $ concat $ observeAllT (msplit z)
-        , testCase "msplit mzero == return Nothing :: strict StateT" $
+        , testCase "msplit mzero :: strict StateT" $
           let z :: SS.StateT Int [] String
               z = mzero
           in assertBool "strict StateT" $ null $ catMaybes $ SS.evalStateT (msplit z) 0
-        , testCase "msplit mzero == return Nothing :: lazy StateT" $
+        , testCase "msplit mzero :: lazy StateT" $
           let z :: SL.StateT Int [] String
               z = mzero
           in assertBool "lazy StateT" $ null $ catMaybes $ SL.evalStateT (msplit z) 0
@@ -130,23 +142,27 @@ main = defaultMain $ testGroup "All"
                 extract = fmap (fmap fst)
             extract (msplit op) @?= [Just 1]
             extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= [Just 2]
+
         , testCase "msplit ReaderT" $ do
             let op = ask
                 extract = fmap fst . catMaybes . flip runReaderT sample
             extract (msplit op) @?= [sample]
             extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= []
+
         , testCase "msplit LogicT" $ do
             let op :: LogicT [] Integer
                 op = foldr (mplus . return) mzero sample
                 extract = fmap fst . catMaybes . concat . observeAllT
             extract (msplit op) @?= [1]
             extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= [2]
+
         , testCase "msplit strict StateT" $ do
             let op :: SS.StateT Integer [] Integer
                 op = (SS.modify (+1) >> SS.get `mplus` op)
                 extract = fmap fst . catMaybes . flip SS.evalStateT 0
             extract (msplit op) @?= [1]
             extract (msplit op >>= \(Just (_,nxt)) -> msplit nxt) @?= [2]
+
         , testCase "msplit lazy StateT" $ do
             let op :: SL.StateT Integer [] Integer
                 op = (SL.modify (+1) >> SL.get `mplus` op)
