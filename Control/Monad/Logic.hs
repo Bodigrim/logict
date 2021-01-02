@@ -87,20 +87,20 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 -- underlying monad.
 --
 -- For example, given
--- 
+--
 -- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
 --
 -- some monads (like 'Identity', 'Reader', 'Writer', and 'State')
 -- will be productive
--- 
+--
 -- >>> take 5 $ runIdentity $ observeAllT nats
 -- [0,1,2,3,4]
--- 
+--
 -- but others (like 'ExceptT', and 'ContT') will not
--- 
+--
 -- >>> take 20 <$> runExcept (observeAllT nats)
 --
--- In general, if the underlying monad manages control flow then 
+-- In general, if the underlying monad manages control flow then
 -- 'observeAllT' may be unproductive under infinite branching,
 -- and 'observeManyT' should be used instead.
 observeAllT :: Monad m => LogicT m a -> m [a]
@@ -173,7 +173,7 @@ logic f = LogicT $ \k -> Identity .
 -- *** Exception: No answer.
 --
 observe :: Logic a -> a
-observe lt = runIdentity $ unLogicT lt (const . return) (error "No answer.")
+observe lt = runIdentity $ unLogicT lt (const . pure) (error "No answer.")
 
 -------------------------------------------------------------------------
 -- | Extracts all results from a 'Logic' computation.
@@ -225,7 +225,7 @@ instance Alternative (LogicT f) where
     f1 <|> f2 = LogicT $ \sk fk -> unLogicT f1 sk (unLogicT f2 sk fk)
 
 instance Monad (LogicT m) where
-    return a = LogicT $ \sk fk -> sk a fk
+    return = pure
     m >>= f = LogicT $ \sk fk -> unLogicT m (\a fk' -> unLogicT (f a) sk fk') fk
 #if !MIN_VERSION_base(4,13,0)
     fail = Fail.fail
@@ -235,8 +235,8 @@ instance Fail.MonadFail (LogicT m) where
     fail _ = LogicT $ \_ fk -> fk
 
 instance MonadPlus (LogicT m) where
-    mzero = LogicT $ \_ fk -> fk
-    m1 `mplus` m2 = LogicT $ \sk fk -> unLogicT m1 sk (unLogicT m2 sk fk)
+  mzero = empty
+  mplus = (<|>)
 
 #if MIN_VERSION_base(4,9,0)
 instance Semigroup (LogicT m a) where
@@ -245,9 +245,9 @@ instance Semigroup (LogicT m a) where
 #endif
 
 instance Monoid (LogicT m a) where
-  mempty = mzero
-  mappend = mplus
-  mconcat = foldr mplus mzero
+  mempty = empty
+  mappend = (<|>)
+  mconcat = F.asum
 
 instance MonadTrans LogicT where
     lift m = LogicT $ \sk fk -> m >>= \a -> sk a fk
@@ -280,8 +280,9 @@ instance (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
 #endif
 
 instance T.Traversable (LogicT Identity) where
-    traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure mzero)
-     where cons a l' = return a `mplus` l'
+  traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure empty)
+    where
+      cons a l' = pure a <|> l'
 
 -- Needs undecidable instances
 instance MonadReader r m => MonadReader r (LogicT m) where
