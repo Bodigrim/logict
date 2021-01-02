@@ -28,6 +28,8 @@ import           Data.Semigroup (Semigroup (..))
 import           Data.Monoid
 #endif
 
+import           TestRebindableSyntax
+
 
 monadReader1 :: Assertion
 monadReader1 = assertEqual "should be equal" [5 :: Int] $
@@ -259,6 +261,9 @@ main = defaultMain $
                        do x <- (return 0 `mplus` return 1) >>- oddsPlus
                           if even x then return x else mzero
                       )
+
+      , testCase "fair conjunction, rebindable syntax, monadic" $
+        [2,4,6,8] @=? observeMany 4 oddsPlusRSBind
 
         -- unfair conjunction does not terminate or produce any
         -- values: this will fail (expectedly) due to a timeout
