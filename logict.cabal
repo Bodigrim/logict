@@ -51,6 +51,10 @@ test-suite logict-tests
     logict -any,
     mtl >=2 && <2.3,
     tasty,
-    tasty-hunit,
-    tasty-expected-failure >= 0.12
+    tasty-hunit
+
+  if impl(ghc >= 8.0)
+    build-depends:
+      tasty-expected-failure >= 0.12
+
   hs-source-dirs: test

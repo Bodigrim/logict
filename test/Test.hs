@@ -1,9 +1,9 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 module Main where
 
 import           Test.Tasty
-import           Test.Tasty.ExpectedFailure
 import           Test.Tasty.HUnit
 
 import           Control.Exception
@@ -13,9 +13,22 @@ import           Control.Monad.Logic
 import           Control.Monad.Reader
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
-import           Data.Bifunctor ( first )
-import           Data.Either
 import           Data.Maybe
+
+#if MIN_VERSION_base(4,9,0)
+import Data.Bifunctor ( first )
+import Test.Tasty.ExpectedFailure
+#if MIN_VERSION_base(4,11,0)
+#else
+import Data.Semigroup (Semigroup (..))
+#endif
+#else
+import Data.Monoid
+first :: (a -> b) -> Either a c -> Either b c
+first _ (Right r) = Right r
+first f (Left x) = Left $ f x
+#endif
+
 
 monadReader1 :: Assertion
 monadReader1 = assertEqual "should be equal" [5 :: Int] $
@@ -42,7 +55,11 @@ nats, odds, oddsOrTwo,
   oddsOrTwoUnfair, oddsOrTwoFair,
   odds5down :: Monad m => LogicT m Integer
 
+#if MIN_VERSION_base(4,6,0)
 nats = pure 0 `mplus` ((1 +) <$> nats)
+#else
+nats = return 0 `mplus` liftM (1 +) nats
+#endif
 
 odds = return 1 `mplus` liftM (2+) odds
 
@@ -86,7 +103,7 @@ main = defaultMain $
     , testCase "runReader" $ [0..4] @=? (take 5 $ runReader (observeAllT nats) "!")
 
     , testCase "manyT runExceptT" $ [0..4] @=?
-      (fromRight [] $ runExcept (observeManyT 5 nats))
+      (either (const []) id $ runExcept (observeManyT 5 nats))
     ]
 
   --------------------------------------------------
@@ -94,12 +111,12 @@ main = defaultMain $
   , testGroup "Control.Monad.Logic tests"
     [
       testCase "runLogicT multi" $ ["Hello world !"] @=?
-      let conc w o = ((w <> " ") <>) <$> o in
-      (runLogicT (yieldWords ["Hello", "world"]) conc (pure "!"))
+      let conc w o = fmap ((w <> " ") <>) o in
+      (runLogicT (yieldWords ["Hello", "world"]) conc (return "!"))
 
     , testCase "runLogicT none" $ ["!"] @=?
-      let conc w o = ((w <> " ") <>) <$> o in
-      (runLogicT (yieldWords []) conc (pure "!"))
+      let conc w o = fmap ((w <> " ") <>) o in
+      (runLogicT (yieldWords []) conc (return "!"))
 
     , testCase "runLogicT first" $ ["Hello"] @=?
       (runLogicT (yieldWords ["Hello", "world"]) (\w -> const $ return w) (return "!"))
@@ -206,8 +223,10 @@ main = defaultMain $
         -- terminate (there are none, since the first clause generates
         -- an infinity of mzero "failures")
 
+#if MIN_VERSION_base(4,9,0)
       , expectFail $ testCase "nontermination even when fair" $
         [[2]] @=? observeManyT 2 oddsOrTwo
+#endif
 
         -- Validate fair disjunction works for other
         -- Control.Monad.Logic.Class instances
@@ -232,22 +251,24 @@ main = defaultMain $
 
     , testGroup "fair conjunction" $
       [
-        -- unfair conjunction does not terminate or produce any
-        -- values: this will fail (expectedly) due to a timeout
-
-        expectFail $ testCase "unfair conjunction" $ [2,4,6,8] @=?
-        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
-                       do x <- (return 0 `mplus` return 1) >>= oddsPlus
-                          if even x then return x else mzero
-                      )
-
         -- Using the fair conjunction operator (>>-) the test produces values
 
-      , testCase "fair conjunction :: LogicT" $ [2,4,6,8] @=?
+        testCase "fair conjunction :: LogicT" $ [2,4,6,8] @=?
         observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
                        do x <- (return 0 `mplus` return 1) >>- oddsPlus
                           if even x then return x else mzero
                       )
+
+        -- unfair conjunction does not terminate or produce any
+        -- values: this will fail (expectedly) due to a timeout
+
+#if MIN_VERSION_base(4,9,0)
+      , expectFail $ testCase "unfair conjunction" $ [2,4,6,8] @=?
+        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                       do x <- (return 0 `mplus` return 1) >>= oddsPlus
+                          if even x then return x else mzero
+                      )
+#endif
 
       , testCase "fair conjunction :: []" $ [2,4,6,8] @=?
         (take 4 $ let oddsL = [ 1 :: Integer ] `mplus` [ o | o <- [3..], odd o ]
@@ -432,4 +453,4 @@ main = defaultMain $
   ]
 
 safely :: IO Integer -> IO (Either String Integer)
-safely o = first (head . lines . show) <$> (try o :: IO (Either SomeException Integer))
+safely o = fmap (first (head . lines . show)) (try o :: IO (Either SomeException Integer))
