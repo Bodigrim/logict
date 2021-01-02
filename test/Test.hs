@@ -55,7 +55,7 @@ nats, odds, oddsOrTwo,
   oddsOrTwoUnfair, oddsOrTwoFair,
   odds5down :: Monad m => LogicT m Integer
 
-#if MIN_VERSION_base(4,6,0)
+#if MIN_VERSION_base(4,8,0)
 nats = pure 0 `mplus` ((1 +) <$> nats)
 #else
 nats = return 0 `mplus` liftM (1 +) nats
