@@ -16,8 +16,11 @@ import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
 import           Data.Maybe
 
-#if MIN_VERSION_base(4,9,0)
+#ifdef MIN_VERSION_tasty_expected_failure
 import           Test.Tasty.ExpectedFailure
+#endif
+
+#if MIN_VERSION_base(4,9,0)
 #if MIN_VERSION_base(4,11,0)
 #else
 import           Data.Semigroup (Semigroup (..))
@@ -220,7 +223,7 @@ main = defaultMain $
         -- terminate (there are none, since the first clause generates
         -- an infinity of mzero "failures")
 
-#if MIN_VERSION_base(4,9,0)
+#ifdef MIN_VERSION_tasty_expected_failure
       , expectFail $ testCase "nontermination even when fair" $
         [[2]] @=? observeManyT 2 oddsOrTwo
 #endif
@@ -259,7 +262,7 @@ main = defaultMain $
         -- unfair conjunction does not terminate or produce any
         -- values: this will fail (expectedly) due to a timeout
 
-#if MIN_VERSION_base(4,9,0)
+#ifdef MIN_VERSION_tasty_expected_failure
       , expectFail $ testCase "unfair conjunction" $ [2,4,6,8] @=?
         observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
                        do x <- (return 0 `mplus` return 1) >>= oddsPlus
