@@ -8,7 +8,6 @@ import           Test.Tasty.HUnit
 
 import           Control.Arrow ( left )
 import           Control.Exception
-import           Control.Monad.Except
 import           Control.Monad.Identity
 import           Control.Monad.Logic
 import           Control.Monad.Reader
@@ -98,12 +97,14 @@ main = defaultMain $
 
     -- Ensure LogicT can be run over other base monads other than
     -- List.  Some are productive (Reader) and some are non-productive
-    -- (Except) in the observeAll case.
+    -- (ExceptT, ContT) in the observeAll case.
 
-    , testCase "runReader" $ [0..4] @=? (take 5 $ runReader (observeAllT nats) "!")
+    , testCase "runReader is productive" $
+      [0..4] @=? (take 5 $ runReader (observeAllT nats) "!")
 
-    , testCase "manyT runExceptT" $ [0..4] @=?
-      (either (const []) id $ runExcept (observeManyT 5 nats))
+    , testCase "observeManyT can be used with Either" $
+      (Right [0..4] :: Either Char [Integer]) @=?
+      (observeManyT 5 nats)
     ]
 
   --------------------------------------------------
