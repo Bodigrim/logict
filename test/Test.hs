@@ -6,6 +6,7 @@ module Main where
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
+import           Control.Arrow ( left )
 import           Control.Exception
 import           Control.Monad.Except
 import           Control.Monad.Identity
@@ -16,17 +17,13 @@ import qualified Control.Monad.State.Strict as SS
 import           Data.Maybe
 
 #if MIN_VERSION_base(4,9,0)
-import Data.Bifunctor ( first )
-import Test.Tasty.ExpectedFailure
+import           Test.Tasty.ExpectedFailure
 #if MIN_VERSION_base(4,11,0)
 #else
-import Data.Semigroup (Semigroup (..))
+import           Data.Semigroup (Semigroup (..))
 #endif
 #else
-import Data.Monoid
-first :: (a -> b) -> Either a c -> Either b c
-first _ (Right r) = Right r
-first f (Left x) = Left $ f x
+import           Data.Monoid
 #endif
 
 
@@ -453,4 +450,4 @@ main = defaultMain $
   ]
 
 safely :: IO Integer -> IO (Either String Integer)
-safely o = fmap (first (head . lines . show)) (try o :: IO (Either SomeException Integer))
+safely o = fmap (left (head . lines . show)) (try o :: IO (Either SomeException Integer))
