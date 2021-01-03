@@ -120,11 +120,49 @@ class (MonadPlus m) => MonadLogic m where
     --   >    x <- oddsPlus a
     --   >    if even x then return x else mzero
     --
-    --   Use the '>>-' in place of the normal monadic bind operation
-    --   '>>=' like so:
+    --   The solution is to use the '>>-' in place of the normal
+    --   monadic bind operation '>>=' when fairness between
+    --   alternative productions is needed in a conjunction of
+    --   statements (rules):
     --
     --   > do x <- (return 0 `mplus` return 1) >>- oddsPlus
     --   >    if even x then return x else mzero
+    --
+    --   However, a bit of care is needed when using '>>-' because
+    --   unlike '>>=', it is not associative.  For example:
+    --
+    --   >>> let m = [10,2,7] :: [Integer]
+    --   >>> let k x = [x, x + 1]
+    --   >>> let h x = [x, x * 2]
+    --   >>> m >>= (\x -> k x >>= h)
+    --   [10,20,11,22,2,4,3,6,7,14,8,16]
+    --   >>> (m >>= k) >>= h
+    --   [10,20,11,22,2,4,3,6,7,14,8,16]
+    --   >>> m >>- (\x -> k x >>- h)
+    --   [10,2,11,7,20,3,22,8,4,14,6,16]
+    --   >>> (m >>- k) >>- h
+    --   [10,2,20,11,4,7,22,3,14,8,6,16]
+    --
+    --   This means that the following will be productive:
+    --
+    --   >>> (return 0 `mplus` return 1) >>-
+    --   >>>    oddsPlus >>-
+    --   >>>    \x -> if even x then return x else mzero
+    --
+    --   Which is equivalent to
+    --
+    --   >>> ((return 0 `mplus` return 1) >>- oddsPlus) >>-
+    --   >>>    (\x -> if even x then return x else mzero)
+    --
+    --   But the following will /not/ be productive:
+    --
+    --   >>> (return 0 `mplus` return 1) >>-
+    --   >>> (\a -> (oddsPlus a >>- \x -> if even x then return x else mzero))
+    --
+    --   Since do notation desugaring results in the latter, the
+    --   @RebindableSyntax@ language pragma cannot easily be used
+    --   either.  Instead, it is recommended to carefully use explicit
+    --   '>>-' only when needed.
     --
     (>>-)      :: m a -> (a -> m b) -> m b
     infixl 1 >>-

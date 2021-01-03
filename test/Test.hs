@@ -260,6 +260,65 @@ main = defaultMain $
                           if even x then return x else mzero
                       )
 
+        -- The first >>- results in a term that produces only a stream
+        -- of evens, so the >>- can produce from that stream.  The
+        -- operation is effectively:
+        --
+        --    (interleave (return 0) (return 1)) >>- oddsPlus >>- if ...
+        --
+        -- And so the values produced for oddsPlus to consume are
+        -- alternated between 0 and 1, allowing oddsPlus to produce a
+        -- value for every 1 received.
+
+      , testCase "fair conjunction OK" $ [2,4,6,8] @=?
+        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                       (return 0 `mplus` return 1) >>-
+                        oddsPlus >>-
+                        (\x -> if even x then return x else mzero)
+                      )
+
+        -- This demonstrates that there is no choice to be made for
+        -- oddsPlus productions in the above and >>- is effectively >>=.
+
+      , testCase "fair conjunction also OK" $ [2,4,6,8] @=?
+        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                       ((return 0 `mplus` return 1) >>-
+                        \a -> oddsPlus a) >>=
+                        (\x -> if even x then return x else mzero)
+                      )
+
+        -- Here the application is effectively rewritten as
+        --
+        --   interleave (oddsPlus 0 >>- \x -> if ...)
+        --              (oddsPlus 1 >>- \x -> if ...)
+        --
+        -- which fails to produce any values because interleave still
+        -- requires production of values from both branches to switch
+        -- between those values, but the first (oddsPlus 0 ...) never
+        -- produces any values.
+
+#ifdef MIN_VERSION_tasty_expected_failure
+      , expectFail $ testCase "fair conjunction non-productive" $ [2,4,6,8] @=?
+        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                       (return 0 `mplus` return 1) >>-
+                        \a -> oddsPlus a >>-
+                              (\x -> if even x then return x else mzero)
+                      )
+#endif
+
+        -- This shows that the second >>- is effectively >>= since
+        -- there's no choice point for it, and values still cannot be
+        -- produced.
+
+#ifdef MIN_VERSION_tasty_expected_failure
+      , expectFail $ testCase "fair conjunction also non-productive" $ [2,4,6,8] @=?
+        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                       (return 0 `mplus` return 1) >>-
+                        \a -> oddsPlus a >>=
+                              (\x -> if even x then return x else mzero)
+                      )
+#endif
+
         -- unfair conjunction does not terminate or produce any
         -- values: this will fail (expectedly) due to a timeout
 
