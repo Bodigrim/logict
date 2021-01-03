@@ -149,14 +149,18 @@ class (MonadPlus m) => MonadLogic m where
     --   >>>    oddsPlus >>-
     --   >>>    \x -> if even x then return x else mzero
     --
+    --   Which is equivalent to
+    --
+    --   >>> ((return 0 `mplus` return 1) >>- oddsPlus) >>-
+    --   >>>    (\x -> if even x then return x else mzero)
+    --
     --   But the following will /not/ be productive:
     --
     --   >>> (return 0 `mplus` return 1) >>-
-    --   >>>    \a -> oddsPlus a >>-
-    --   >>>          \x -> if even x then return x else mzero
+    --   >>> (\a -> (oddsPlus a >>- \x -> if even x then return x else mzero))
     --
     --   Since do notation desugaring results in the latter, the
-    --   'RebindableSyntax' language pragma cannot easily be used
+    --   @RebindableSyntax@ language pragma cannot easily be used
     --   either.  Instead, it is recommended to carefully use explicit
     --   '>>-' only when needed.
     --
