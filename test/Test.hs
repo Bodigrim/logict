@@ -297,23 +297,27 @@ main = defaultMain $
         -- between those values, but the first (oddsPlus 0 ...) never
         -- produces any values.
 
+#ifdef MIN_VERSION_tasty_expected_failure
       , expectFail $ testCase "fair conjunction non-productive" $ [2,4,6,8] @=?
         observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
                        (return 0 `mplus` return 1) >>-
                         \a -> oddsPlus a >>-
                               (\x -> if even x then return x else mzero)
                       )
+#endif
 
         -- This shows that the second >>- is effectively >>= since
         -- there's no choice point for it, and values still cannot be
         -- produced.
 
+#ifdef MIN_VERSION_tasty_expected_failure
       , expectFail $ testCase "fair conjunction also non-productive" $ [2,4,6,8] @=?
         observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
                        (return 0 `mplus` return 1) >>-
                         \a -> oddsPlus a >>=
                               (\x -> if even x then return x else mzero)
                       )
+#endif
 
         -- unfair conjunction does not terminate or produce any
         -- values: this will fail (expectedly) due to a timeout
