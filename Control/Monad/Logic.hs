@@ -90,13 +90,15 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 --
 -- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
 --
--- some monads (like 'Identity', 'Reader', 'Writer', and 'State')
--- will be productive
+-- some monads (like 'Identity', 'Control.Monad.Reader.Reader',
+-- 'Control.Monad.Writer.Writer', and 'Control.Monad.State.State')
+-- will be productive:
 --
 -- >>> take 5 $ runIdentity $ observeAllT nats
 -- [0,1,2,3,4]
 --
--- but others (like 'ExceptT', and 'ContT') will not
+-- but others (like 'Control.Monad.Except.ExceptT',
+-- and 'Control.Monad.Cont.ContT') will not:
 --
 -- >>> take 20 <$> runExcept (observeAllT nats)
 --
