@@ -21,7 +21,9 @@
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
-import Control.Monad.Reader
+import Control.Monad
+import Control.Monad.Reader (ReaderT(..))
+import Control.Monad.Trans (MonadTrans(..))
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
 

@@ -46,12 +46,13 @@ import Control.Applicative
 
 import Control.Monad
 import qualified Control.Monad.Fail as Fail
-import Control.Monad.Identity
-import Control.Monad.Trans
+import Control.Monad.Identity (Identity(..))
+import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.Trans (MonadTrans(..))
 
-import Control.Monad.Reader.Class
-import Control.Monad.State.Class
-import Control.Monad.Error.Class
+import Control.Monad.Reader.Class (MonadReader(..))
+import Control.Monad.State.Class (MonadState(..))
+import Control.Monad.Error.Class (MonadError(..))
 
 #if !MIN_VERSION_base(4,8,0)
 import Data.Monoid (Monoid (..))
