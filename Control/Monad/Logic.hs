@@ -5,23 +5,17 @@
 -- License     : BSD3
 -- Maintainer  : Andrew Lelechenko <andrew.lelechenko@gmail.com>
 --
--- A backtracking, logic programming monad.
---
---    Adapted from the paper
---    /Backtracking, Interleaving, and Terminating Monad Transformers/,
---    by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry
---    (<http://okmij.org/ftp/papers/LogicT.pdf>).
+-- Adapted from the paper
+-- <http://okmij.org/ftp/papers/LogicT.pdf Backtracking, Interleaving, and Terminating Monad Transformers>
+-- by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
 -------------------------------------------------------------------------
 
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE Safe                  #-}
 {-# LANGUAGE UndecidableInstances  #-}
-
-#if __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe #-}
-#endif
 
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,
@@ -39,7 +33,7 @@ module Control.Monad.Logic (
     observeManyT,
     observeAllT,
     module Control.Monad,
-    module Control.Monad.Trans
+    module Trans
   ) where
 
 import Control.Applicative
@@ -49,6 +43,7 @@ import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity (Identity(..))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans (MonadTrans(..))
+import qualified Control.Monad.Trans as Trans
 
 import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.State.Class (MonadState(..))
@@ -89,13 +84,13 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 --
 -- For example, given
 --
--- >>> let nats = pure 0 `mplus` ((1 +) <$> nats)
+-- >>> let nats = pure 0 <|> fmap (+ 1) nats
 --
 -- some monads (like 'Identity', 'Control.Monad.Reader.Reader',
 -- 'Control.Monad.Writer.Writer', and 'Control.Monad.State.State')
 -- will be productive:
 --
--- >>> take 5 $ runIdentity $ observeAllT nats
+-- >>> take 5 $ runIdentity (observeAllT nats)
 -- [0,1,2,3,4]
 --
 -- but others (like 'Control.Monad.Except.ExceptT',
@@ -133,23 +128,18 @@ observeManyT n m
 --
 -- For example:
 --
--- >>> yieldWords = foldr (mplus . return) mzero
---
+-- >>> yieldWords = foldr ((<|>) . pure) empty
 -- >>> showEach wrd nxt = putStrLn wrd >> nxt
---
 -- >>> runLogicT (yieldWords ["foo", "bar"]) showEach (putStrLn "none!")
 -- foo
 -- bar
 -- none!
---
 -- >>> runLogicT (yieldWords []) showEach (putStrLn "none!")
 -- none!
---
 -- >>> showFirst wrd _ = putStrLn wrd
---
 -- >>> runLogicT (yieldWords ["foo", "bar"]) showFirst (putStrLn "none!")
 -- foo
-
+--
 runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
 runLogicT (LogicT r) = r
 
@@ -169,10 +159,10 @@ logic f = LogicT $ \k -> Identity .
 -- | Extracts the first result from a 'Logic' computation, failing if
 -- there are no results.
 --
--- >>> observe (return 5 `mplus` return 3 `mplus` mzero)
+-- >>> observe (pure 5 <|> pure 3 <|> empty)
 -- 5
 --
--- >>> observe mzero
+-- >>> observe empty
 -- *** Exception: No answer.
 --
 observe :: Logic a -> a
@@ -181,7 +171,7 @@ observe lt = runIdentity $ unLogicT lt (const . pure) (error "No answer.")
 -------------------------------------------------------------------------
 -- | Extracts all results from a 'Logic' computation.
 --
--- >>> observe (return 5 `mplus` mzero `mplus` mzero `mplus` return 3 `mplus` mzero)
+-- >>> observe (pure 5 <|> empty <|> empty <|> pure 3 <|> empty)
 -- [5,3]
 --
 observeAll :: Logic a -> [a]
@@ -190,8 +180,7 @@ observeAll = runIdentity . observeAllT
 -------------------------------------------------------------------------
 -- | Extracts up to a given number of results from a 'Logic' computation.
 --
--- >>> let nats = return 0 `mplus` liftM (1 +) nats
---
+-- >>> let nats = pure 0 <|> fmap (+ 1) nats
 -- >>> observeMany 5 nats
 -- [0,1,2,3,4]
 --
@@ -204,10 +193,10 @@ observeMany i = take i . observeAll
 -- | Runs a 'Logic' computation with the specified initial success and
 -- failure continuations.
 --
--- >>> runLogic mzero (+) 0
+-- >>> runLogic empty (+) 0
 -- 0
 --
--- >>> runLogic (return 5 `mplus` return 3 `mplus` mzero) (+) 0
+-- >>> runLogic (pure 5 <|> pure 3 <|> empty) (+) 0
 -- 8
 --
 runLogic :: Logic a -> (a -> r -> r) -> r -> r
