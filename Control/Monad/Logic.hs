@@ -101,8 +101,8 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 -- In general, if the underlying monad manages control flow then
 -- 'observeAllT' may be unproductive under infinite branching,
 -- and 'observeManyT' should be used instead.
-observeAllT :: Monad m => LogicT m a -> m [a]
-observeAllT m = unLogicT m (liftM . (:)) (return [])
+observeAllT :: Applicative m => LogicT m a -> m [a]
+observeAllT m = unLogicT m (fmap . (:)) (pure [])
 
 -------------------------------------------------------------------------
 -- | Extracts up to a given number of results from a 'LogicT' computation.
@@ -258,16 +258,16 @@ instance (Monad m) => MonadLogic (LogicT m) where
 
 #if MIN_VERSION_base(4,8,0)
 
-instance {-# OVERLAPPABLE #-} (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
-    foldMap f m = F.fold $ unLogicT m (liftM . mappend . f) (return mempty)
+instance {-# OVERLAPPABLE #-} (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
+    foldMap f m = F.fold $ unLogicT m (fmap . mappend . f) (pure mempty)
 
 instance {-# OVERLAPPING #-} F.Foldable (LogicT Identity) where
     foldr f z m = runLogic m f z
 
 #else
 
-instance (Monad m, F.Foldable m) => F.Foldable (LogicT m) where
-    foldMap f m = F.fold $ unLogicT m (liftM . mappend . f) (return mempty)
+instance (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
+    foldMap f m = F.fold $ unLogicT m (fmap . mappend . f) (pure mempty)
 
 #endif
 

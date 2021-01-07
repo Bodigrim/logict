@@ -14,6 +14,7 @@
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Reader (ReaderT(..))
 import Control.Monad.Trans (MonadTrans(..))
@@ -21,7 +22,7 @@ import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
 
 -- | A backtracking, logic programming monad.
-class (MonadPlus m) => MonadLogic m where
+class (Monad m, Alternative m) => MonadLogic m where
     -- | Attempts to __split__ the computation, giving access to the first
     --   result. Satisfies the following laws:
     --
@@ -179,31 +180,31 @@ class (MonadPlus m) => MonadLogic m where
     -- All the class functions besides msplit can be derived from msplit, if
     -- desired
     interleave m1 m2 = msplit m1 >>=
-                        maybe m2 (\(a, m1') -> return a `mplus` interleave m2 m1')
+                        maybe m2 (\(a, m1') -> pure a <|> interleave m2 m1')
 
-    m >>- f = do (a, m') <- maybe mzero return =<< msplit m
+    m >>- f = do (a, m') <- maybe empty pure =<< msplit m
                  interleave (f a) (m' >>- f)
 
-    ifte t th el = msplit t >>= maybe el (\(a,m) -> th a `mplus` (m >>= th))
+    ifte t th el = msplit t >>= maybe el (\(a,m) -> th a <|> (m >>= th))
 
-    once m = do (a, _) <- maybe mzero return =<< msplit m
-                return a
+    once m = do (a, _) <- maybe empty pure =<< msplit m
+                pure a
 
-    lnot m = ifte (once m) (const mzero) (return ())
+    lnot m = ifte (once m) (const empty) (pure ())
 
 
 -------------------------------------------------------------------------------
 -- | The inverse of msplit. Satisfies the following law:
 --
 -- > msplit m >>= reflect == m
-reflect :: MonadLogic m => Maybe (a, m a) -> m a
-reflect Nothing = mzero
-reflect (Just (a, m)) = return a `mplus` m
+reflect :: Alternative m => Maybe (a, m a) -> m a
+reflect Nothing = empty
+reflect (Just (a, m)) = pure a <|> m
 
 -- An instance of MonadLogic for lists
 instance MonadLogic [] where
-    msplit []     = return Nothing
-    msplit (x:xs) = return $ Just (x, xs)
+    msplit []     = pure Nothing
+    msplit (x:xs) = pure $ Just (x, xs)
 
 -- | Note that splitting a transformer does
 -- not allow you to provide different input
@@ -217,17 +218,17 @@ instance MonadLogic [] where
 instance MonadLogic m => MonadLogic (ReaderT e m) where
     msplit rm = ReaderT $ \e -> do r <- msplit $ runReaderT rm e
                                    case r of
-                                     Nothing -> return Nothing
-                                     Just (a, m) -> return (Just (a, lift m))
+                                     Nothing -> pure Nothing
+                                     Just (a, m) -> pure (Just (a, lift m))
 
 -- | See note on splitting above.
-instance MonadLogic m => MonadLogic (StrictST.StateT s m) where
+instance (MonadLogic m, MonadPlus m) => MonadLogic (StrictST.StateT s m) where
     msplit sm = StrictST.StateT $ \s ->
                     do r <- msplit (StrictST.runStateT sm s)
                        case r of
-                            Nothing          -> return (Nothing, s)
+                            Nothing          -> pure (Nothing, s)
                             Just ((a,s'), m) ->
-                                return (Just (a, StrictST.StateT (\_ -> m)), s')
+                                pure (Just (a, StrictST.StateT (const m)), s')
 
     interleave ma mb = StrictST.StateT $ \s ->
                         StrictST.runStateT ma s `interleave` StrictST.runStateT mb s
@@ -242,13 +243,13 @@ instance MonadLogic m => MonadLogic (StrictST.StateT s m) where
     once ma = StrictST.StateT $ \s -> once (StrictST.runStateT ma s)
 
 -- | See note on splitting above.
-instance MonadLogic m => MonadLogic (LazyST.StateT s m) where
+instance (MonadLogic m, MonadPlus m) => MonadLogic (LazyST.StateT s m) where
     msplit sm = LazyST.StateT $ \s ->
                     do r <- msplit (LazyST.runStateT sm s)
                        case r of
-                            Nothing -> return (Nothing, s)
+                            Nothing -> pure (Nothing, s)
                             Just ((a,s'), m) ->
-                                return (Just (a, LazyST.StateT (\_ -> m)), s')
+                                pure (Just (a, LazyST.StateT (const m)), s')
 
     interleave ma mb = LazyST.StateT $ \s ->
                         LazyST.runStateT ma s `interleave` LazyST.runStateT mb s
