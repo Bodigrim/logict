@@ -78,7 +78,7 @@ yieldWords = go
 
 main :: IO ()
 main = defaultMain $
-  localOption (mkTimeout 1000000) $  -- 1 second
+  localOption (mkTimeout 100000) $  -- 0.1 second
   testGroup "All"
   [ testGroup "Monad Reader + env"
     [ testCase "Monad Reader 1" monadReader1
