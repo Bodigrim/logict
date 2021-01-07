@@ -48,8 +48,8 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   Note that even with 'interleave' this computation will never
     --   terminate after returning 2: only the first value can be
     --   safely observed, after which each odd value becomes 'Control.Applicative.empty'
-    --   (equivalent to a
-    --   <http://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse45 Prolog @fail@>)
+    --   (equivalent to
+    --   <http://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse45 Prolog's fail>)
     --   which does not stop the evaluation but indicates there is no
     --   value to return yet.
     --
