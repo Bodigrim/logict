@@ -44,7 +44,7 @@ grandparent(sarah, anne).
 grandparent(arnold, anne).
 ```
 
-For this execution, `Person` and `X` are "free" variables where
+For this query execution, `Person` and `X` are "free" variables where
 `Grandchild` has been fixed to `anne`. The Prolog engine internally
 "backtracks" to the `parent(Person, X)` statement to try different
 known values for each variable, executing forward to see if the values
@@ -52,7 +52,7 @@ satisfy all the results and produce a resulting value.
 
 # Haskell logict Package
 
-The Haskell equivalent for this process, using the `logict` package
+The Haskell equivalent for the example above, using the `logict` package
 might look something like the following:
 
 ```haskell
@@ -86,6 +86,11 @@ array will be generated.  The `observeAll` collects all the values
 ```
 Anne's grandparents are: ["Sarah","Arnold"]
 ```
+
+This example is provided as the `grandparents` executable built by the
+`logict` package so you can run it yourself and run various experiments.
+
+## Additional Notes
 
 Note that the implementation in this `logict` package provides the
 backtracking functionality at a lower level than that defined in the
