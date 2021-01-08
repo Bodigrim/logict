@@ -20,6 +20,8 @@ for consideration and `mzero` use used to specify the lack of any
 acceptable values---to add support for fairness and pruning using a
 set of operations defined by a new `MonadLogic` class.
 
+# Background
+
 In a typical example for Prolog logic programming, there are a set of
 facts (expressed as unconditional statements):
 
@@ -47,6 +49,8 @@ For this execution, `Person` and `X` are "free" variables where
 "backtracks" to the `parent(Person, X)` statement to try different
 known values for each variable, executing forward to see if the values
 satisfy all the results and produce a resulting value.
+
+# Haskell logict Package
 
 The Haskell equivalent for this process, using the `logict` package
 might look something like the following:
