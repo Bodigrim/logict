@@ -80,26 +80,31 @@ main = do let grandparents = observeAll (grandparent "Anne")
 
 In this simple example, each of the `choose` calls acts as a
 backtracking choice point where different entries of the `parents`
-array will be generated.  The `observeAll` collects all the values
-"produced" by `Logic`, allowing this program to display:
+array will be generated.  This backtracking is handled automatically
+by the `MonadLogic` instance for `Logic` and does not need to be
+explicitly written into the code.  The `observeAll` function collects
+all the values "produced" by `Logic`, allowing this program to
+display:
 
 ```
 Anne's grandparents are: ["Sarah","Arnold"]
 ```
 
 This example is provided as the `grandparents` executable built by the
-`logict` package so you can run it yourself and run various experiments.
+`logict` package so you can run it yourself and try various
+experimental modifications.
 
 ## Additional Notes
 
-Note that the implementation in this `logict` package provides the
-backtracking functionality at a lower level than that defined in the
-associated paper.  The backtracking is defined within the
-`Alternative` class as `<|>` and `empty`, whereas the paper uses the
-`MonadPlus` class and the `mplus` and `mzero` functions; since
-`Alternative` is a requirement (constraint) for `MonadPlus`, this
-allows both nomenclatures to be supported and used as appropriate to
-the client code.
+The implementation in this `logict` package provides the backtracking
+functionality at a lower level than that defined in the associated
+paper.  The backtracking is defined within the `Alternative` class as
+`<|>` and `empty`, whereas the paper uses the `MonadPlus` class and
+the `mplus` and `mzero` functions; since `Alternative` is a
+requirement (constraint) for `MonadPlus`, this allows both
+nomenclatures to be supported and used as appropriate to the client
+code.
 
-More details as well as other functions (including fair conjunction
-and disjunction) are provided in the Haddock documentation.
+More details on using this package as well as other functions
+(including fair conjunction and disjunction) are provided in the
+Haddock documentation.
