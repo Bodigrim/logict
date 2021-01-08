@@ -26,4 +26,4 @@ grandparent grandchild = do (p,c) <- choose parents
 choose = foldr ((<|>) . pure) empty
 
 main = do let grandparents = observeAll (grandparent "Anne")
-          putStrLn $ "Anne's grandparents are: " <> show grandparents
+          putStrLn $ "Anne's grandparents are: " ++ show grandparents
