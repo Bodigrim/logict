@@ -8,6 +8,10 @@
 -- Adapted from the paper
 -- <http://okmij.org/ftp/papers/LogicT.pdf Backtracking, Interleaving, and Terminating Monad Transformers>
 -- by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
+-- Note that the paper uses 'MonadPlus' vocabulary
+-- ('mzero' and 'mplus'),
+-- while examples below prefer 'empty' and '<|>'
+-- from 'Alternative'.
 -------------------------------------------------------------------------
 
 {-# LANGUAGE CPP                   #-}
@@ -144,12 +148,12 @@ runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
 runLogicT (LogicT r) = r
 
 -------------------------------------------------------------------------
--- | The basic @Logic@ monad, for performing backtracking computations
+-- | The basic 'Logic' monad, for performing backtracking computations
 -- returning values of type @a@.
 type Logic = LogicT Identity
 
 -------------------------------------------------------------------------
--- | A smart constructor for Logic computations.
+-- | A smart constructor for 'Logic' computations.
 logic :: (forall r. (a -> r -> r) -> r -> r) -> Logic a
 logic f = LogicT $ \k -> Identity .
                          f (\a -> runIdentity . k a . Identity) .
@@ -252,7 +256,7 @@ instance (Monad m) => MonadLogic (LogicT m) where
     -- Try to avoid it.
     msplit m = lift $ unLogicT m ssk (return Nothing)
      where
-     ssk a fk = return $ Just (a, (lift fk >>= reflect))
+     ssk a fk = return $ Just (a, lift fk >>= reflect)
     once m = LogicT $ \sk fk -> unLogicT m (\a _ -> sk a fk) fk
     lnot m = LogicT $ \sk fk -> unLogicT m (\_ _ -> fk) (sk () fk)
 

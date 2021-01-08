@@ -8,6 +8,10 @@
 -- Adapted from the paper
 -- <http://okmij.org/ftp/papers/LogicT.pdf Backtracking, Interleaving, and Terminating Monad Transformers>
 -- by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
+-- Note that the paper uses 'MonadPlus' vocabulary
+-- ('mzero' and 'mplus'),
+-- while examples below prefer 'empty' and '<|>'
+-- from 'Alternative'.
 -------------------------------------------------------------------------
 
 {-# LANGUAGE Safe #-}
@@ -125,29 +129,33 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   However, a bit of care is needed when using '>>-' because
     --   unlike '>>=', it is not associative.  For example:
     --
-    --   >>> let m = [10,2,7] :: [Integer]
+    --   >>> let m = [2,7] :: [Int]
     --   >>> let k x = [x, x + 1]
     --   >>> let h x = [x, x * 2]
-    --   >>> m >>= (\x -> k x >>= h) == (m >>= k) >>= h
-    --   True
-    --   >>> m >>- (\x -> k x >>- h) == (m >>- k) >>- h
-    --   False
+    --   >>> m >>= (\x -> k x >>= h)
+    --   [2,4,3,6,7,14,8,16]
+    --   >>> (m >>= k) >>= h -- same as above
+    --   [2,4,3,6,7,14,8,16]
+    --   >>> m >>- (\x -> k x >>- h)
+    --   [2,7,3,8,4,14,6,16]
+    --   >>> (m >>- k) >>- h -- central elements are different
+    --   [2,7,4,3,14,8,6,16]
     --
     --   This means that the following will be productive:
     --
-    --   >>> (pure 0 <|> pure 1) >>-
-    --   >>>    oddsPlus >>-
-    --   >>>    \x -> if even x then pure x else empty
+    --   > (pure 0 <|> pure 1) >>-
+    --   >   oddsPlus >>-
+    --   >     \x -> if even x then pure x else empty
     --
     --   Which is equivalent to
     --
-    --   >>> ((pure 0 <|> pure 1) >>- oddsPlus) >>-
-    --   >>>    (\x -> if even x then pure x else empty)
+    --   > ((pure 0 <|> pure 1) >>- oddsPlus) >>-
+    --   >   (\x -> if even x then pure x else empty)
     --
     --   But the following will /not/ be productive:
     --
-    --   >>> (pure 0 <|> pure 1) >>-
-    --   >>> (\a -> (oddsPlus a >>- \x -> if even x then pure x else empty))
+    --   > (pure 0 <|> pure 1) >>-
+    --   >   (\a -> (oddsPlus a >>- \x -> if even x then pure x else empty))
     --
     --   Since do notation desugaring results in the latter, the
     --   @RebindableSyntax@ language pragma cannot easily be used

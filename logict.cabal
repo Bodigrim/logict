@@ -11,11 +11,9 @@ author: Dan Doel
 homepage: https://github.com/Bodigrim/logict#readme
 synopsis: A backtracking logic-programming monad.
 description:
-  A continuation-based, backtracking, logic programming monad.
-  An adaptation of the two-continuation implementation found
-  in the paper "Backtracking, Interleaving, and Terminating
-  Monad Transformers" available here:
-  <http://okmij.org/ftp/papers/LogicT.pdf>
+  Adapted from the paper
+  <http://okmij.org/ftp/papers/LogicT.pdf Backtracking, Interleaving, and Terminating Monad Transformers>
+  by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
 category: Control
 build-type: Simple
 extra-source-files:
