@@ -17,11 +17,11 @@ parents = [ ("Sarah",  "John")
           ]
 
 grandparent :: String -> Logic String
-grandparent grandchild = do (p,c) <- choose parents
-                            (c',g) <- choose parents
+grandparent grandchild = do (p, c) <- choose parents
+                            (c', g) <- choose parents
                             guard (c == c')
                             guard (g == grandchild)
-                            return p
+                            pure p
 
 choose = foldr ((<|>) . pure) empty
 

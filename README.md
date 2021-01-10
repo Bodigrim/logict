@@ -1,14 +1,15 @@
 # logict [![Build Status](https://github.com/Bodigrim/logict/workflows/Haskell-CI/badge.svg)](https://github.com/Bodigrim/logict/actions?query=workflow%3AHaskell-CI) [![Hackage](http://img.shields.io/hackage/v/logict.svg)](https://hackage.haskell.org/package/logict) [![Stackage LTS](http://stackage.org/package/logict/badge/lts)](http://stackage.org/lts/package/logict) [![Stackage Nightly](http://stackage.org/package/logict/badge/nightly)](http://stackage.org/nightly/package/logict)
 
 Provides support for logic-based evaluation.  Logic-based programming
-is exemplified by languages such as
-[Prolog](https://wikipedia.org/wiki/Prolog) and
-[Datalog](https://wikipedia.org/wiki/Datalog) which uses a technique
-known as backtracking to consider alternative values.
+uses a technique known as backtracking to consider alternative values
+as solutions to logic statements, and is exemplified by languages
+such as [Prolog](https://wikipedia.org/wiki/Prolog) and
+[Datalog](https://wikipedia.org/wiki/Datalog).
 
 Logic-based programming replaces explicit iteration and sequencing
-code with implicit functionality that internally "iterates" over a set
-of possible values that satisfy explicitly provided conditions.
+code with implicit functionality that internally "iterates" (via
+backtracking) over a set of possible values that satisfy explicitly
+provided conditions.
 
 This package adds support for logic-based programming in Haskell using
 the continuation-based techniques adapted from the paper
@@ -66,11 +67,11 @@ parents = [ ("Sarah",  "John")
           ]
 
 grandparent :: String -> Logic String
-grandparent grandchild = do (p,c) <- choose parents
-                            (c',g) <- choose parents
+grandparent grandchild = do (p, c) <- choose parents
+                            (c', g) <- choose parents
                             guard (c == c')
                             guard (g == grandchild)
-                            return p
+                            pure p
 
 choose = foldr ((<|>) . pure) empty
 
@@ -94,6 +95,20 @@ This example is provided as the `grandparents` executable built by the
 `logict` package so you can run it yourself and try various
 experimental modifications.
 
+The example above is very simplistic and is just a brief introduction
+into the capabilities of logic programming and the `logict` package.
+The `logict` package provides additional functionality such as:
+
+ * fair conjunction and disjunction, which can help with potentially
+   infinite sets of inputs
+
+ * A `LogicT` monad stack that lets logic operations be performed
+   along with other monadic actions (e.g. if the parents sample was
+   streamed from an input file using the `IO` monad.
+
+ * A `MonadLogic` class which allows other monads to be defined which
+   provide logic programming capabilities.
+
 ## Additional Notes
 
 The implementation in this `logict` package provides the backtracking
@@ -107,4 +122,4 @@ code.
 
 More details on using this package as well as other functions
 (including fair conjunction and disjunction) are provided in the
-Haddock documentation.
+[Haddock documentation](https://hackage.haskell.org/package/logict).
