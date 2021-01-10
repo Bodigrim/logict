@@ -99,8 +99,8 @@ The example above is very simplistic and is just a brief introduction
 into the capabilities of logic programming and the `logict` package.
 The `logict` package provides additional functionality such as:
 
- * fair conjunction and disjunction, which can help with potentially
-   infinite sets of inputs
+ * Fair conjunction and disjunction, which can help with potentially
+   infinite sets of inputs.
 
  * A `LogicT` monad stack that lets logic operations be performed
    along with other monadic actions (e.g. if the parents sample was
