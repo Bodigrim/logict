@@ -16,9 +16,9 @@ the continuation-based techniques adapted from the paper
 [Backtracking, Interleaving, and Terminating Monad Transformers](http://okmij.org/ftp/papers/LogicT.pdf)
 by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
 This paper extends previous research into using `MonadPlus`
-functionality---where `mplus` is used to specify value alternatives
+functionality--where `mplus` is used to specify value alternatives
 for consideration and `mzero` use used to specify the lack of any
-acceptable values---to add support for fairness and pruning using a
+acceptable values--to add support for fairness and pruning using a
 set of operations defined by a new `MonadLogic` class.
 
 # Background
@@ -104,7 +104,7 @@ The `logict` package provides additional functionality such as:
 
  * A `LogicT` monad stack that lets logic operations be performed
    along with other monadic actions (e.g. if the parents sample was
-   streamed from an input file using the `IO` monad.
+   streamed from an input file using the `IO` monad).
 
  * A `MonadLogic` class which allows other monads to be defined which
    provide logic programming capabilities.
