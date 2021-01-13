@@ -54,14 +54,10 @@ test-suite logict-tests
   ghc-options: -Wall
   build-depends:
     base >=2 && <5,
+    async,
     logict -any,
     mtl,
     tasty,
     tasty-hunit
-
-  if impl(ghc >= 8.0)
-    build-depends:
-      tasty-expected-failure >= 0.12,
-      async
 
   hs-source-dirs: test
