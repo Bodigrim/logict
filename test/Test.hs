@@ -76,7 +76,9 @@ yieldWords = go
 
 main :: IO ()
 main = defaultMain $
+#if __GLASGOW_HASKELL__ >= 702
   localOption (mkTimeout 3000000) $  -- 3 second deadman timeout
+#endif
   testGroup "All"
   [ testGroup "Monad Reader + env"
     [ testCase "Monad Reader 1" monadReader1
@@ -110,11 +112,11 @@ main = defaultMain $
   , testGroup "Control.Monad.Logic tests"
     [
       testCase "runLogicT multi" $ ["Hello world !"] @=?
-      let conc w o = fmap ((w <> " ") <>) o in
+      let conc w o = fmap ((w `mappend` " ") `mappend`) o in
       (runLogicT (yieldWords ["Hello", "world"]) conc (return "!"))
 
     , testCase "runLogicT none" $ ["!"] @=?
-      let conc w o = fmap ((w <> " ") <>) o in
+      let conc w o = fmap ((w `mappend` " ") `mappend`) o in
       (runLogicT (yieldWords []) conc (return "!"))
 
     , testCase "runLogicT first" $ ["Hello"] @=?

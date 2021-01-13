@@ -22,8 +22,11 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE Safe                  #-}
 {-# LANGUAGE UndecidableInstances  #-}
+
+#if __GLASGOW_HASKELL__ >= 704
+{-# LANGUAGE Safe #-}
+#endif
 
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,
