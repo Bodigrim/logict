@@ -3,9 +3,11 @@ version: 0.7.0.3
 license: BSD3
 license-file: LICENSE
 copyright:
-  Copyright (c) 2007-2014, Dan Doel,
-  Copyright (c) 2011-2013, Edward Kmett,
-  Copyright (c) 2014, Roman Cheplyaka
+  (c) 2007-2014 Dan Doel,
+  (c) 2011-2013 Edward Kmett,
+  (c) 2014      Roman Cheplyaka,
+  (c) 2020-2021 Andrew Lelechenko,
+  (c) 2020-2021 Kevin Quick
 maintainer: Andrew Lelechenko <andrew.lelechenko@gmail.com>
 author: Dan Doel
 homepage: https://github.com/Bodigrim/logict#readme

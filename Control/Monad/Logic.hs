@@ -1,7 +1,11 @@
 -------------------------------------------------------------------------
 -- |
 -- Module      : Control.Monad.Logic
--- Copyright   : (c) Dan Doel
+-- Copyright   : (c) 2007-2014 Dan Doel,
+--               (c) 2011-2013 Edward Kmett,
+--               (c) 2014      Roman Cheplyaka,
+--               (c) 2020-2021 Andrew Lelechenko,
+--               (c) 2020-2021 Kevin Quick
 -- License     : BSD3
 -- Maintainer  : Andrew Lelechenko <andrew.lelechenko@gmail.com>
 --
