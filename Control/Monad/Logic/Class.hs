@@ -185,23 +185,24 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   results of a computation will be equivalent, or should be treated as
     --   such.
     --
-    --   As an example, here's a way to determine if a number has an
-    --   factors (whole number divisors):
+    --   As an example, here's a way to determine if a number is
+    --   composite (has non-trivial integer division, i.e. the not a
+    --   prime number, see https://wikipedia.org/wiki/Composite_number):
     --
     --   > choose = foldr ((<|>) . pure) empty
     --   >
     --   > factors n = do a <- choose [2..n-1]
     --   >                b <- choose [2..n-1]
     --   >                guard (a * b == n)
-    --   >                return (a,b)
+    --   >                pure (a, b)
     --   >
-    --   > nonPrime_ v = do _ <- factors v
-    --   >                  return "Not Prime"
+    --   > composite_ v = do _ <- factors v
+    --   >                   pure "Composite"
     --
     --   While this works as intended, it actually does too much work:
     --
-    --   >>> observeAll (nonPrime_ 20)
-    --   ["Not Prime", "Not Prime", "Not Prime", "Not Prime"]
+    --   >>> observeAll (composite_ 20)
+    --   ["Composite", "Composite", "Composite", "Composite"]
     --
     --   Because there are multiple factors of 20, and they can also
     --   occur in either order:
@@ -210,14 +211,14 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   [(2,10), (4,5), (5,4), (10,2)]
     --
     --   Clearly one could just use 'observe' here to get the first
-    --   non-prime result, but if the call to @nonPrime@ is in the
+    --   non-prime result, but if the call to @composite@ is in the
     --   middle of other logic code then use 'once' instead.
     --
-    --   > nonPrime v = do _ <- once (factors v)
-    --   >                 return "Not Prime"
+    --   > composite v = do _ <- once (factors v)
+    --   >                  pure "Composite"
     --
-    --   >>> observeAll (nonPrime 20)
-    --   ["Not Prime"]
+    --   >>> observeAll (composite 20)
+    --   ["Composite"]
     --
     once       :: m a -> m a
 
@@ -232,10 +233,10 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   > factors n = do a <- choose [2..n-1]
     --   >                b <- choose [2..n-1]
     --   >                guard (a * b == n)
-    --   >                return (a,b)
+    --   >                pure (a, b)
     --   >
     --   > prime v = do _ <- lnot (factors v)
-    --   >              return True
+    --   >              pure True
     --
     --   >>> observeAll (prime 20)
     --   []
@@ -267,7 +268,7 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   > factors n = do a <- choose [2..n-1]
     --   >                b <- choose [2..n-1]
     --   >                guard (a * b == n)
-    --   >                return (a,b)
+    --   >                pure (a, b)
     --   >
     --   > prime v = once (ifte (factors v)
     --   >                   (const (return True))
