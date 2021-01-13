@@ -523,5 +523,7 @@ main = defaultMain $
 safely :: IO Integer -> IO (Either String Integer)
 safely o = fmap (left (head . lines . show)) (try o :: IO (Either SomeException Integer))
 
+#ifdef MIN_VERSION_tasty_expected_failure
 nonTerminating :: IO a -> IO (Either () a)
 nonTerminating op = race (threadDelay 100000) op  -- returns Left () after 0.1s
+#endif
