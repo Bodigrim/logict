@@ -7,6 +7,8 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 
 import           Control.Arrow ( left )
+import           Control.Concurrent ( threadDelay )
+import           Control.Concurrent.Async ( race )
 import           Control.Exception
 import           Control.Monad.Identity
 import           Control.Monad.Logic
@@ -14,10 +16,6 @@ import           Control.Monad.Reader
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
 import           Data.Maybe
-
-#ifdef MIN_VERSION_tasty_expected_failure
-import           Test.Tasty.ExpectedFailure
-#endif
 
 #if MIN_VERSION_base(4,9,0)
 #if MIN_VERSION_base(4,11,0)
@@ -78,7 +76,7 @@ yieldWords = go
 
 main :: IO ()
 main = defaultMain $
-  localOption (mkTimeout 100000) $  -- 0.1 second
+  localOption (mkTimeout 3000000) $  -- 3 second deadman timeout
   testGroup "All"
   [ testGroup "Monad Reader + env"
     [ testCase "Monad Reader 1" monadReader1
@@ -224,10 +222,8 @@ main = defaultMain $
         -- terminate (there are none, since the first clause generates
         -- an infinity of mzero "failures")
 
-#ifdef MIN_VERSION_tasty_expected_failure
-      , expectFail $ testCase "nontermination even when fair" $
-        [[2]] @=? observeManyT 2 oddsOrTwo
-#endif
+      , testCase "NONTERMINATION even when fair" $
+        (Left () @=?) =<< (nonTerminating $ observeManyT 2 oddsOrTwo)
 
         -- Validate fair disjunction works for other
         -- Control.Monad.Logic.Class instances
@@ -297,38 +293,38 @@ main = defaultMain $
         -- between those values, but the first (oddsPlus 0 ...) never
         -- produces any values.
 
-#ifdef MIN_VERSION_tasty_expected_failure
-      , expectFail $ testCase "fair conjunction non-productive" $ [2,4,6,8] @=?
-        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
-                       (return 0 `mplus` return 1) >>-
-                        \a -> oddsPlus a >>-
-                              (\x -> if even x then return x else mzero)
-                      )
-#endif
+      , testCase "fair conjunction NON-PRODUCTIVE" $
+        (Left () @=?) =<<
+        (nonTerminating $
+         observeManyT 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                           (return 0 `mplus` return 1) >>-
+                           \a -> oddsPlus a >>-
+                                 (\x -> if even x then return x else mzero)
+                        ))
 
         -- This shows that the second >>- is effectively >>= since
         -- there's no choice point for it, and values still cannot be
         -- produced.
 
-#ifdef MIN_VERSION_tasty_expected_failure
-      , expectFail $ testCase "fair conjunction also non-productive" $ [2,4,6,8] @=?
-        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
-                       (return 0 `mplus` return 1) >>-
-                        \a -> oddsPlus a >>=
-                              (\x -> if even x then return x else mzero)
-                      )
-#endif
+      , testCase "fair conjunction also NON-PRODUCTIVE" $
+        (Left () @=?) =<<
+        (nonTerminating $
+         observeManyT 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                           (return 0 `mplus` return 1) >>-
+                           \a -> oddsPlus a >>=
+                                 (\x -> if even x then return x else mzero)
+                        ))
 
         -- unfair conjunction does not terminate or produce any
         -- values: this will fail (expectedly) due to a timeout
 
-#ifdef MIN_VERSION_tasty_expected_failure
-      , expectFail $ testCase "unfair conjunction" $ [2,4,6,8] @=?
-        observeMany 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
-                       do x <- (return 0 `mplus` return 1) >>= oddsPlus
-                          if even x then return x else mzero
-                      )
-#endif
+      , testCase "unfair conjunction is NON-PRODUCTIVE" $
+        (Left () @=?) =<<
+        (nonTerminating $
+         observeManyT 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
+                           do x <- (return 0 `mplus` return 1) >>= oddsPlus
+                              if even x then return x else mzero
+                        ))
 
       , testCase "fair conjunction :: []" $ [2,4,6,8] @=?
         (take 4 $ let oddsL = [ 1 :: Integer ] `mplus` [ o | o <- [3..], odd o ]
@@ -514,3 +510,11 @@ main = defaultMain $
 
 safely :: IO Integer -> IO (Either String Integer)
 safely o = fmap (left (head . lines . show)) (try o :: IO (Either SomeException Integer))
+
+-- | This is used to test logic operations that don't typically
+-- terminate by running a parallel race between the operation and a
+-- timer.  A result of @Left ()@ means that the timer won and the
+-- operation did not terminate within that time period.
+
+nonTerminating :: IO a -> IO (Either () a)
+nonTerminating op = race (threadDelay 100000) op  -- returns Left () after 0.1s
