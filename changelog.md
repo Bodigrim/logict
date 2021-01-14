@@ -1,3 +1,8 @@
+# 0.7.1.0
+
+* Improve documentation.
+* Relax superclasses of `MonadLogic` to `Monad` and `Alternative` instead of `MonadPlus`.
+
 # 0.7.0.3
 
 * Support GHC 9.0.
