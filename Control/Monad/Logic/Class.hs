@@ -186,7 +186,7 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   such.
     --
     --   As an example, here's a way to determine if a number is
-    --   composite (has non-trivial integer division, i.e. the not a
+    --   composite (has non-trivial integer divisors, i.e. not a
     --   prime number, see https://wikipedia.org/wiki/Composite_number):
     --
     --   > choose = foldr ((<|>) . pure) empty
