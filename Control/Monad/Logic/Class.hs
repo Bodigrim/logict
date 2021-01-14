@@ -191,12 +191,12 @@ class (Monad m, Alternative m) => MonadLogic m where
     --
     --   > choose = foldr ((<|>) . pure) empty
     --   >
-    --   > factors n = do a <- choose [2..n-1]
-    --   >                b <- choose [2..n-1]
-    --   >                guard (a * b == n)
-    --   >                pure (a, b)
+    --   > divisors n = do a <- choose [2..n-1]
+    --   >                 b <- choose [2..n-1]
+    --   >                 guard (a * b == n)
+    --   >                 pure (a, b)
     --   >
-    --   > composite_ v = do _ <- factors v
+    --   > composite_ v = do _ <- divisors v
     --   >                   pure "Composite"
     --
     --   While this works as intended, it actually does too much work:
@@ -204,17 +204,17 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   >>> observeAll (composite_ 20)
     --   ["Composite", "Composite", "Composite", "Composite"]
     --
-    --   Because there are multiple factors of 20, and they can also
+    --   Because there are multiple divisors of 20, and they can also
     --   occur in either order:
     --
-    --   >>> observeAll (factors 20)
+    --   >>> observeAll (divisors 20)
     --   [(2,10), (4,5), (5,4), (10,2)]
     --
     --   Clearly one could just use 'observe' here to get the first
     --   non-prime result, but if the call to @composite@ is in the
     --   middle of other logic code then use 'once' instead.
     --
-    --   > composite v = do _ <- once (factors v)
+    --   > composite v = do _ <- once (divisors v)
     --   >                  pure "Composite"
     --
     --   >>> observeAll (composite 20)
@@ -226,16 +226,15 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   @lnot m@ fails. If @m@ fails, then @lnot m@ succeeds with the value @()@.
     --
     --   For example, evaluating if a number is prime can be based on
-    --   the failure to find factors of a number:
+    --   the failure to find divisors of a number:
     --
     --   > choose = foldr ((<|>) . pure) empty
     --   >
-    --   > factors n = do a <- choose [2..n-1]
-    --   >                b <- choose [2..n-1]
-    --   >                guard (a * b == n)
-    --   >                pure (a, b)
+    --   > divisors n = do d <- choose [2..n-1]
+    --   >                 guard (n `rem` d == 0)
+    --   >                 pure (a, b)
     --   >
-    --   > prime v = do _ <- lnot (factors v)
+    --   > prime v = do _ <- lnot (divisors v)
     --   >              pure True
     --
     --   >>> observeAll (prime 20)
@@ -243,7 +242,7 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   >>> observeAll (prime 19)
     --   [True]
     --
-    --   Here if @factors@ never succeeds, then the 'lnot' will
+    --   Here if @divisors@ never succeeds, then the 'lnot' will
     --   succeed and the number will be declared as prime.
     lnot :: m a -> m ()
 
@@ -265,12 +264,11 @@ class (Monad m, Alternative m) => MonadLogic m where
     --
     --   > choose = foldr ((<|>) . pure) empty
     --   >
-    --   > factors n = do a <- choose [2..n-1]
-    --   >                b <- choose [2..n-1]
-    --   >                guard (a * b == n)
-    --   >                pure (a, b)
+    --   > divisors n = do d <- choose [2..n-1]
+    --   >                 guard (n `rem` d == 0)
+    --   >                 pure (a, b)
     --   >
-    --   > prime v = once (ifte (factors v)
+    --   > prime v = once (ifte (divisors v)
     --   >                   (const (return True))
     --   >                   (return False))
     --
@@ -280,7 +278,7 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   [True]
     --
     --   Notice that this cannot be done with a simple @if-then-else@
-    --   because @factors@ either generates values or it does not, so
+    --   because @divisors@ either generates values or it does not, so
     --   there's no "false" condition to check with a simple @if@
     --   statement.
     ifte       :: m a -> (a -> m b) -> m b -> m b
