@@ -49,13 +49,23 @@ class (Monad m, Alternative m) => MonadLogic m where
     --
     --   Such computations can cause problems in some circumstances. Consider:
     --
-    --   > do x <- odds <|> pure 2
-    --   >    if even x then pure x else empty
+    --   > two = do x <- odds <|> pure 2
+    --   >          if even x then pure x else empty
     --
-    --   Such a computation may never consider the @pure 2@, and
-    --   will therefore never return any results. By contrast, using
-    --   'interleave' in place of 'Control.Applicative.<|>' ensures fair consideration
-    --   of both branches of a disjunction.
+    --   >>> observe two
+    --   ...never completes...
+    --
+    --   Such a computation may never consider the @pure 2@, and will
+    --   therefore even @observe two@ never return any results. By
+    --   contrast, using 'interleave' in place of
+    --   'Control.Applicative.<|>' ensures fair consideration of both
+    --   branches of a disjunction.
+    --
+    --   > fairTwo = do x <- odds `interleave` pure 2
+    --   >              if even x then pure x else empty
+    --
+    --   >>> observe fairTwo
+    --   2
     --
     --   Note that even with 'interleave' this computation will never
     --   terminate after returning 2: only the first value can be
@@ -106,8 +116,11 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   >
     --   > oddsPlus n = odds >>= \a -> pure (a + n)
     --   >
-    --   > do x <- (pure 0 <|> pure 1) >>= oddsPlus
-    --   >    if even x then pure x else empty
+    --   > g = do x <- (pure 0 <|> pure 1) >>= oddsPlus
+    --   >        if even x then pure x else empty
+    --
+    --   >>> observeMany 3 g
+    --   ...never completes...
     --
     --   This will never produce any value because all values produced
     --   by the @do@ program come from the @pure 1@ driven operation
@@ -131,8 +144,11 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   alternative productions is needed in a conjunction of
     --   statements (rules):
     --
-    --   > do x <- (pure 0 <|> pure 1) >>- oddsPlus
-    --   >    if even x then pure x else empty
+    --   > h = do x <- (pure 0 <|> pure 1) >>- oddsPlus
+    --   >        if even x then pure x else empty
+    --
+    --   >>> observeMany 3 h
+    --   [2,4,6]
     --
     --   However, a bit of care is needed when using '>>-' because
     --   unlike '>>=', it is not associative.  For example:
@@ -173,25 +189,107 @@ class (Monad m, Alternative m) => MonadLogic m where
     (>>-)      :: m a -> (a -> m b) -> m b
     infixl 1 >>-
 
-    -- | Logical __conditional.__ The equivalent of
-    --   <http://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse44 Prolog's soft-cut>.
-    --   If its first argument succeeds at all, then the results will be fed into
-    --   the success branch. Otherwise, the failure branch is taken.
-    --   satisfies the following laws:
-    --
-    --   > ifte (pure a) th el       == th a
-    --   > ifte empty th el          == el
-    --   > ifte (pure a <|> m) th el == th a <|> (m >>= th)
-    ifte       :: m a -> (a -> m b) -> m b -> m b
-
     -- | __Pruning.__ Selects one result out of many. Useful for when multiple
     --   results of a computation will be equivalent, or should be treated as
     --   such.
+    --
+    --   As an example, here's a way to determine if a number is
+    --   composite (has non-trivial integer divisors, i.e. not a
+    --   prime number, see https://wikipedia.org/wiki/Composite_number):
+    --
+    --   > choose = foldr ((<|>) . pure) empty
+    --   >
+    --   > divisors n = do a <- choose [2..n-1]
+    --   >                 b <- choose [2..n-1]
+    --   >                 guard (a * b == n)
+    --   >                 pure (a, b)
+    --   >
+    --   > composite_ v = do _ <- divisors v
+    --   >                   pure "Composite"
+    --
+    --   While this works as intended, it actually does too much work:
+    --
+    --   >>> observeAll (composite_ 20)
+    --   ["Composite", "Composite", "Composite", "Composite"]
+    --
+    --   Because there are multiple divisors of 20, and they can also
+    --   occur in either order:
+    --
+    --   >>> observeAll (divisors 20)
+    --   [(2,10), (4,5), (5,4), (10,2)]
+    --
+    --   Clearly one could just use 'observe' here to get the first
+    --   non-prime result, but if the call to @composite@ is in the
+    --   middle of other logic code then use 'once' instead.
+    --
+    --   > composite v = do _ <- once (divisors v)
+    --   >                  pure "Composite"
+    --
+    --   >>> observeAll (composite 20)
+    --   ["Composite"]
+    --
     once       :: m a -> m a
 
     -- | __Inverts__ a logic computation. If @m@ succeeds with at least one value,
     --   @lnot m@ fails. If @m@ fails, then @lnot m@ succeeds with the value @()@.
+    --
+    --   For example, evaluating if a number is prime can be based on
+    --   the failure to find divisors of a number:
+    --
+    --   > choose = foldr ((<|>) . pure) empty
+    --   >
+    --   > divisors n = do d <- choose [2..n-1]
+    --   >                 guard (n `rem` d == 0)
+    --   >                 pure (a, b)
+    --   >
+    --   > prime v = do _ <- lnot (divisors v)
+    --   >              pure True
+    --
+    --   >>> observeAll (prime 20)
+    --   []
+    --   >>> observeAll (prime 19)
+    --   [True]
+    --
+    --   Here if @divisors@ never succeeds, then the 'lnot' will
+    --   succeed and the number will be declared as prime.
     lnot :: m a -> m ()
+
+    -- | Logical __conditional.__ The equivalent of
+    --   <http://lpn.swi-prolog.org/lpnpage.php?pagetype=html&pageid=lpn-htmlse44
+    --   Prolog's soft-cut>.  If its first argument succeeds at all,
+    --   then the results will be fed into the success
+    --   branch. Otherwise, the failure branch is taken.  The failure
+    --   branch is never considered if the first argument has any
+    --   successes.  The 'ifte' function satisfies the following laws:
+    --
+    --   > ifte (pure a) th el       == th a
+    --   > ifte empty th el          == el
+    --   > ifte (pure a <|> m) th el == th a <|> (m >>= th)
+    --
+    --   For example, the previous @prime@ function returned nothing
+    --   if the number was not prime, but if it should return @False@
+    --   instead, the following can be used:
+    --
+    --   > choose = foldr ((<|>) . pure) empty
+    --   >
+    --   > divisors n = do d <- choose [2..n-1]
+    --   >                 guard (n `rem` d == 0)
+    --   >                 pure (a, b)
+    --   >
+    --   > prime v = once (ifte (divisors v)
+    --   >                   (const (return True))
+    --   >                   (return False))
+    --
+    --   >>> observeAll (prime 20)
+    --   [False]
+    --   >>> observeAll (prime 19)
+    --   [True]
+    --
+    --   Notice that this cannot be done with a simple @if-then-else@
+    --   because @divisors@ either generates values or it does not, so
+    --   there's no "false" condition to check with a simple @if@
+    --   statement.
+    ifte       :: m a -> (a -> m b) -> m b -> m b
 
     -- All the class functions besides msplit can be derived from msplit, if
     -- desired

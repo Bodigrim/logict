@@ -156,7 +156,7 @@ runLogicT (LogicT r) = r
 
 -------------------------------------------------------------------------
 -- | The basic 'Logic' monad, for performing backtracking computations
--- returning values of type @a@.
+-- returning values (e.g. @Logic a@ will return values of type @a@).
 type Logic = LogicT Identity
 
 -------------------------------------------------------------------------
