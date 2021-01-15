@@ -76,6 +76,18 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   which does not stop the evaluation but indicates there is no
     --   value to return yet.
     --
+    --   Unlike '<|>', 'interleave' is not associative:
+    --
+    --   >>> let x = [1,2,3]; y = [4,5,6]; z = [7,8,9] :: [Int]
+    --   >>> x `interleave` y
+    --   [1,4,2,5,3,6]
+    --   >>> (x `interleave` y) `interleave` z
+    --   [1,7,4,8,2,9,5,3,6]
+    --   >>> y `interleave` z
+    --   [4,7,5,8,6,9]
+    --   >>> x `interleave` (y `interleave` z)
+    --   [1,4,2,7,3,5,8,6,9]
+    --
     interleave :: m a -> m a -> m a
 
     -- | __Fair conjunction.__ Similarly to the previous function, consider
@@ -100,7 +112,7 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   if @x@ is odd, causing it to be discarded and a return
     --   to an 'Control.Applicative.<|>' decision point to get the next @x@.
     --
-    --   The statement @a@ '>>=' @k@ "can backtrack arbitrarily many
+    --   The statement "@a@ '>>=' @k@ can backtrack arbitrarily many
     --   times" means that the computation is resulting in 'Control.Applicative.empty' and
     --   that @a@ has an infinite number of 'Control.Applicative.<|>' applications to
     --   return to.  This is called a conjunctive computation because

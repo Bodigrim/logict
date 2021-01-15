@@ -16,9 +16,9 @@ the continuation-based techniques adapted from the paper
 [Backtracking, Interleaving, and Terminating Monad Transformers](http://okmij.org/ftp/papers/LogicT.pdf)
 by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
 This paper extends previous research into using `MonadPlus`
-functionality--where `mplus` is used to specify value alternatives
+functionality—where `mplus` is used to specify value alternatives
 for consideration and `mzero` use used to specify the lack of any
-acceptable values--to add support for fairness and pruning using a
+acceptable values—to add support for fairness and pruning using a
 set of operations defined by a new `MonadLogic` class.
 
 # Background
