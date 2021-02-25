@@ -76,6 +76,11 @@ import Control.Monad.Logic.Class
 -------------------------------------------------------------------------
 -- | A monad transformer for performing backtracking computations
 -- layered over another monad @m@.
+--
+-- When @m@ is 'Identity', 'LogicT' @m@ becomes isomorphic to a list
+-- (see 'Logic'). Thus 'LogicT' @m@ for non-trivial @m@ can be imagined
+-- as a list, pattern matching on which causes monadic effects.
+--
 newtype LogicT m a =
     LogicT { unLogicT :: forall r. (a -> m r -> m r) -> m r -> m r }
 
@@ -157,6 +162,21 @@ runLogicT (LogicT r) = r
 -------------------------------------------------------------------------
 -- | The basic 'Logic' monad, for performing backtracking computations
 -- returning values (e.g. 'Logic' @a@ will return values of type @a@).
+--
+-- 'Logic' is a
+-- <http://okmij.org/ftp/tagless-final/course/Boehm-Berarducci.html Boehm-Berarducci encoding>
+-- of lists. Speaking plainly, its type is identical (up to 'Identity' wrappers)
+-- to 'foldr' applied to a given list. And this list itself can be reconstructed
+-- by supplying @(:)@ and @[]@.
+--
+-- > import Data.Functor.Identity
+-- >
+-- > toList :: Logic a -> [a]
+-- > toList (Logic fld) = runIdentity $ fld (\x (Identity xs) -> Identity (x : xs)) (Identity [])
+-- >
+-- > fromList :: [a] -> Logic a
+-- > fromList xs = LogictT $ \cons nil -> foldr cons nil xs
+--
 type Logic = LogicT Identity
 
 -------------------------------------------------------------------------
@@ -176,11 +196,14 @@ logic f = LogicT $ \k -> Identity .
 -- >>> observe empty
 -- *** Exception: No answer.
 --
+-- Since 'Logic' is isomorphic to a list, 'observe' is 'head' in disguise.
+--
 observe :: Logic a -> a
 observe lt = runIdentity $ unLogicT lt (const . pure) (error "No answer.")
 
 -------------------------------------------------------------------------
--- | Extracts all results from a 'Logic' computation.
+-- | Extracts all results from a 'Logic' computation, witnessing
+-- a half of isomorphism between 'Logic' and lists.
 --
 -- >>> observe (pure 5 <|> empty <|> empty <|> pure 3 <|> empty)
 -- [5,3]
@@ -194,6 +217,8 @@ observeAll = runIdentity . observeAllT
 -- >>> let nats = pure 0 <|> fmap (+ 1) nats
 -- >>> observeMany 5 nats
 -- [0,1,2,3,4]
+--
+-- Since 'Logic' is isomorphic to a list, 'observeMany' is 'take' in disguise.
 --
 observeMany :: Int -> Logic a -> [a]
 observeMany i = take i . observeAll
@@ -209,6 +234,9 @@ observeMany i = take i . observeAll
 --
 -- >>> runLogic (pure 5 <|> pure 3 <|> empty) (+) 0
 -- 8
+--
+-- When invoked with @(:)@ and @[]@ as arguments, reveals
+-- a half of isomorphism between 'Logic' and lists.
 --
 runLogic :: Logic a -> (a -> r -> r) -> r -> r
 runLogic l s f = runIdentity $ unLogicT l si fi
