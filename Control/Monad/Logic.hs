@@ -163,6 +163,7 @@ runLogicT (LogicT r) = r
 -- | The basic 'Logic' monad, for performing backtracking computations
 -- returning values (e.g. 'Logic' @a@ will return values of type @a@).
 --
+-- __Technical perspective.__
 -- 'Logic' is a
 -- <http://okmij.org/ftp/tagless-final/course/Boehm-Berarducci.html Boehm-Berarducci encoding>
 -- of lists. Speaking plainly, its type is identical (up to 'Identity' wrappers)
@@ -171,11 +172,11 @@ runLogicT (LogicT r) = r
 --
 -- > import Data.Functor.Identity
 -- >
--- > toList :: Logic a -> [a]
--- > toList (Logic fld) = runIdentity $ fld (\x (Identity xs) -> Identity (x : xs)) (Identity [])
--- >
 -- > fromList :: [a] -> Logic a
 -- > fromList xs = LogictT $ \cons nil -> foldr cons nil xs
+-- >
+-- > toList :: Logic a -> [a]
+-- > toList (Logic fld) = runIdentity $ fld (\x (Identity xs) -> Identity (x : xs)) (Identity [])
 --
 type Logic = LogicT Identity
 
@@ -196,17 +197,19 @@ logic f = LogicT $ \k -> Identity .
 -- >>> observe empty
 -- *** Exception: No answer.
 --
--- Since 'Logic' is isomorphic to a list, 'observe' is 'head' in disguise.
+-- Since 'Logic' is isomorphic to a list, 'observe' is analogous to 'head'.
 --
 observe :: Logic a -> a
 observe lt = runIdentity $ unLogicT lt (const . pure) (error "No answer.")
 
 -------------------------------------------------------------------------
--- | Extracts all results from a 'Logic' computation, witnessing
--- a half of isomorphism between 'Logic' and lists.
+-- | Extracts all results from a 'Logic' computation.
 --
--- >>> observe (pure 5 <|> empty <|> empty <|> pure 3 <|> empty)
+-- >>> observeAll (pure 5 <|> empty <|> empty <|> pure 3 <|> empty)
 -- [5,3]
+--
+-- 'observeAll' reveals a half of the isomorphism between 'Logic'
+-- and lists. See description of 'runLogic' for the other half.
 --
 observeAll :: Logic a -> [a]
 observeAll = runIdentity . observeAllT
@@ -218,7 +221,7 @@ observeAll = runIdentity . observeAllT
 -- >>> observeMany 5 nats
 -- [0,1,2,3,4]
 --
--- Since 'Logic' is isomorphic to a list, 'observeMany' is 'take' in disguise.
+-- Since 'Logic' is isomorphic to a list, 'observeMany' is analogous to 'take'.
 --
 observeMany :: Int -> Logic a -> [a]
 observeMany i = take i . observeAll
@@ -236,7 +239,8 @@ observeMany i = take i . observeAll
 -- 8
 --
 -- When invoked with @(:)@ and @[]@ as arguments, reveals
--- a half of isomorphism between 'Logic' and lists.
+-- a half of the isomorphism between 'Logic' and lists.
+-- See description of 'observeAll' for the other half.
 --
 runLogic :: Logic a -> (a -> r -> r) -> r -> r
 runLogic l s f = runIdentity $ unLogicT l si fi
