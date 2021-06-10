@@ -281,7 +281,11 @@ instance Semigroup (LogicT m a) where
 
 instance Monoid (LogicT m a) where
   mempty = empty
+#if MIN_VERSION_base(4,9,0)
+  mappend = (<>)
+#else
   mappend = (<|>)
+#endif
   mconcat = F.asum
 
 instance MonadTrans LogicT where
