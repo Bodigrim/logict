@@ -173,10 +173,10 @@ runLogicT (LogicT r) = r
 -- > import Data.Functor.Identity
 -- >
 -- > fromList :: [a] -> Logic a
--- > fromList xs = LogictT $ \cons nil -> foldr cons nil xs
+-- > fromList xs = LogicT $ \cons nil -> foldr cons nil xs
 -- >
 -- > toList :: Logic a -> [a]
--- > toList (Logic fld) = runIdentity $ fld (\x (Identity xs) -> Identity (x : xs)) (Identity [])
+-- > toList (LogicT fld) = runIdentity $ fld (\x (Identity xs) -> Identity (x : xs)) (Identity [])
 --
 type Logic = LogicT Identity
 
