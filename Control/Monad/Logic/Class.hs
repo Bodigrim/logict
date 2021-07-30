@@ -291,8 +291,8 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   >                 pure d
     --   >
     --   > prime v = once (ifte (divisors v)
-    --   >                   (const (pure True))
-    --   >                   (pure False))
+    --   >                   (const (pure False))
+    --   >                   (pure True))
     --
     --   >>> observeAll (prime 20)
     --   [False]
