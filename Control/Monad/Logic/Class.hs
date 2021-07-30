@@ -310,16 +310,14 @@ class (Monad m, Alternative m) => MonadLogic m where
     interleave m1 m2 = msplit m1 >>=
                         maybe m2 (\(a, m1') -> pure a <|> interleave m2 m1')
 
-    m >>- f = do (a, m') <- maybe empty pure =<< msplit m
-                 interleave (f a) (m' >>- f)
+    m >>- f = msplit m >>= maybe empty
+      (\(a, m') -> interleave (f a) (m' >>- f))
 
     ifte t th el = msplit t >>= maybe el (\(a,m) -> th a <|> (m >>= th))
 
-    once m = do (a, _) <- maybe empty pure =<< msplit m
-                pure a
+    once m = msplit m >>= maybe empty (\(a, _) -> pure a)
 
-    lnot m = ifte (once m) (const empty) (pure ())
-
+    lnot m = msplit m >>= maybe (pure ()) (const empty)
 
 -------------------------------------------------------------------------------
 -- | The inverse of 'msplit'. Satisfies the following law:
