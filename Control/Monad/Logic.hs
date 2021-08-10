@@ -19,6 +19,9 @@
 -------------------------------------------------------------------------
 
 {-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DeriveFoldable        #-}
+{-# LANGUAGE DeriveFunctor         #-}
+{-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
@@ -318,10 +321,49 @@ instance (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
 
 #endif
 
-instance T.Traversable (LogicT Identity) where
+-- A much simpler logic monad representation used to define the
+-- Traversable instance.
+newtype ML m a = ML (m (MLView m a))
+  deriving (Functor, F.Foldable, T.Traversable)
+
+data MLView m a = EmptyML | ConsML a (ML m a)
+  deriving (Functor, F.Foldable)
+
+instance T.Traversable m => T.Traversable (MLView m) where
+  traverse _ EmptyML = pure EmptyML
+  traverse f (ConsML x (ML m))
+    = liftA2 (\y ym -> ConsML y (ML ym)) (f x) (T.traverse (T.traverse f) m)
+  {- The derived instance would write the second case as
+   -
+   -   traverse f (ConsML x xs) = liftA2 ConsML (f x) (traverse @(ML m) f xs)
+   -
+   - Inlining the inner traverse gives
+   -
+   -   traverse f (ConsML x (ML m)) = liftA2 ConsML (f x) (ML <$> traverse (traverse f) m)
+   -
+   - revealing fmap under liftA2. We fuse those into a single application of liftA2,
+   - in case fmap isn't free.
+  -}
+
+toML :: Applicative m => LogicT m a -> ML m a
+toML (LogicT q) = ML $ q (\a m -> pure $ ConsML a (ML m)) (pure EmptyML)
+
+fromML :: Monad m => ML m a -> LogicT m a
+fromML (ML m) = lift m >>= \r -> case r of
+  EmptyML -> empty
+  ConsML a xs -> pure a <|> fromML xs
+
+#if MIN_VERSION_base(4,8,0)
+instance {-# OVERLAPPING #-} T.Traversable (LogicT Identity) where
   traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure empty)
     where
       cons a l' = pure a <|> l'
+instance {-# OVERLAPPABLE #-} (Monad m, T.Traversable m) => T.Traversable (LogicT m) where
+  traverse f = fmap fromML . T.traverse f . toML
+#else
+instance (Monad m, Applicative m, T.Traversable m) => T.Traversable (LogicT m) where
+  traverse f = fmap fromML . T.traverse f . toML
+#endif
 
 -- Needs undecidable instances
 instance MonadReader r m => MonadReader r (LogicT m) where
