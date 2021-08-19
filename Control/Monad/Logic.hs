@@ -46,6 +46,8 @@ module Control.Monad.Logic (
     observeT,
     observeManyT,
     observeAllT,
+    fromLogicT,
+    fromLogicTWith,
     module Control.Monad,
     module Trans
   ) where
@@ -161,6 +163,27 @@ observeManyT n m
 --
 runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
 runLogicT (LogicT r) = r
+
+-- | Convert from 'LogicT' to an arbitrary logic-like monad transformer,
+-- such as <https://hackage.haskell.org/package/logict-sequence logict-sequence>
+#if MIN_VERSION_base(4,8,0)
+fromLogicT :: (Alternative (t m), MonadTrans t, Monad m, Monad (t m))
+  => LogicT m a -> t m a
+#else
+fromLogicT :: (Alternative (t m), MonadTrans t, Applicative m, Monad m, Monad (t m))
+  => LogicT m a -> t m a
+#endif
+fromLogicT = fromLogicTWith lift
+
+-- | Convert from @'LogicT' m@ to an arbitrary logic-like monad,
+-- such as @[]@.
+-- The first argument should be a
+-- <https://hackage.haskell.org/package/mmorph/docs/Control-Monad-Morph.html monad morphism>.
+-- to produce sensible results.
+fromLogicTWith :: (Applicative m, Monad n, Alternative n)
+  => (forall x. m x -> n x) -> LogicT m a -> n a
+fromLogicTWith p (LogicT f) = join . p $
+  f (\a v -> pure (pure a <|> join (p v))) (pure empty)
 
 -------------------------------------------------------------------------
 -- | The basic 'Logic' monad, for performing backtracking computations
