@@ -45,6 +45,7 @@ module Control.Monad.Logic (
     observeAllT,
     fromLogicT,
     fromLogicTWith,
+    hoistLogicT,
     module Control.Monad,
     module Trans
   ) where
@@ -174,6 +175,7 @@ fromLogicT = fromLogicTWith lift
 
 -- | Convert from @'LogicT' m@ to an arbitrary logic-like monad,
 -- such as @[]@.
+--
 -- The first argument should be a
 -- <https://hackage.haskell.org/package/mmorph/docs/Control-Monad-Morph.html monad morphism>.
 -- to produce sensible results.
@@ -181,6 +183,19 @@ fromLogicTWith :: (Applicative m, Monad n, Alternative n)
   => (forall x. m x -> n x) -> LogicT m a -> n a
 fromLogicTWith p (LogicT f) = join . p $
   f (\a v -> pure (pure a <|> join (p v))) (pure empty)
+
+-- | Convert a 'LogicT' computation from one underlying monad to another.
+-- For example,
+--
+-- @
+-- hoistLogicT lift :: LogicT m a -> LogicT (StateT m) a
+-- @
+--
+-- The first argument should be a
+-- <https://hackage.haskell.org/package/mmorph/docs/Control-Monad-Morph.html monad morphism>.
+-- to produce sensible results.
+hoistLogicT :: (Applicative m, Monad n) => (forall x. m x -> n x) -> LogicT m a -> LogicT n a
+hoistLogicT f = fromLogicTWith (lift . f)
 
 -------------------------------------------------------------------------
 -- | The basic 'Logic' monad, for performing backtracking computations
