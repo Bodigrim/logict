@@ -167,7 +167,18 @@ runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
 runLogicT (LogicT r) = r
 
 -- | Convert from 'LogicT' to an arbitrary logic-like monad transformer,
--- such as <https://hackage.haskell.org/package/logict-sequence logict-sequence>
+-- such as <https://hackage.haskell.org/package/list-t list-t>
+-- or <https://hackage.haskell.org/package/logict-sequence logict-sequence>
+--
+-- For example, to show a representation of the structure of a `LogicT`
+-- computation, @l@, over a data-like `Monad` (such as '[]',
+-- @Data.Sequence.Seq@, etc.), you could write
+--
+-- @
+-- import ListT (ListT)
+--
+-- 'show' $ fromLogicT @ListT l
+-- @
 #if MIN_VERSION_base(4,8,0)
 fromLogicT :: (Alternative (t m), MonadTrans t, Monad m, Monad (t m))
   => LogicT m a -> t m a
