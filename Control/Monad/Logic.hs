@@ -62,6 +62,9 @@ import Control.Monad.Identity (Identity(..))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans (MonadTrans(..))
 import qualified Control.Monad.Trans as Trans
+#if MIN_VERSION_base(4,8,0)
+import Control.Monad.Zip (MonadZip (..))
+#endif
 
 import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.State.Class (MonadState(..))
@@ -387,8 +390,11 @@ instance (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
 
 #endif
 
--- A much simpler logic monad representation used to define the
--- Traversable instance.
+-- A much simpler logic monad representation used to define the Traversable and
+-- MonadZip instances. This is essentially the same as ListT from the list-t
+-- package, but it uses a slightly more efficient representation: MLView m a is
+-- more compact than Maybe (a, ML m a), and the additional laziness in the
+-- latter appears to be incidental/historical.
 newtype ML m a = ML (m (MLView m a))
   deriving (Functor, F.Foldable, T.Traversable)
 
@@ -429,6 +435,40 @@ instance {-# OVERLAPPABLE #-} (Monad m, T.Traversable m) => T.Traversable (Logic
 #else
 instance (Monad m, Applicative m, T.Traversable m) => T.Traversable (LogicT m) where
   traverse f = fmap fromML . T.traverse f . toML
+#endif
+
+#if MIN_VERSION_base(4,8,0)
+zipWithML :: MonadZip m => (a -> b -> c) -> ML m a -> ML m b -> ML m c
+zipWithML f = go
+    where
+      go (ML m1) (ML m2) =
+        ML $ mzipWith zv m1 m2
+      zv (a `ConsML` as) (b `ConsML` bs) = f a b `ConsML` go as bs
+      zv _ _ = EmptyML
+
+unzipML :: MonadZip m => ML m (a, b) -> (ML m a, ML m b)
+unzipML (ML m)
+    | (l, r) <- munzip (fmap go m)
+    = (ML l, ML r)
+    where
+      go EmptyML = (EmptyML, EmptyML)
+      go ((a, b) `ConsML` listab)
+        = (a `ConsML` la, b `ConsML` lb)
+        where
+          -- If the underlying munzip is careful not to leak memory, then we
+          -- don't want to defeat it. We need to be sure that la and lb are
+          -- realized as selector thunks. Hopefully the CPSish conversion
+          -- doesn't muck anything up at another level.
+          {-# NOINLINE remains #-}
+          {-# NOINLINE la #-}
+          {-# NOINLINE lb #-}
+          remains = unzipML listab
+          (la, lb) = remains
+
+instance MonadZip m => MonadZip (LogicT m) where
+  mzipWith f xs ys = fromML $ zipWithML f (toML xs) (toML ys)
+  munzip xys = case unzipML (toML xys) of
+    (xs, ys) -> (fromML xs, fromML ys)
 #endif
 
 -- Needs undecidable instances
