@@ -171,7 +171,7 @@ runLogicT (LogicT r) = r
 -- or <https://hackage.haskell.org/package/logict-sequence logict-sequence>
 --
 -- For example, to show a representation of the structure of a `LogicT`
--- computation, @l@, over a data-like `Monad` (such as '[]',
+-- computation, @l@, over a data-like `Monad` (such as @[]@,
 -- @Data.Sequence.Seq@, etc.), you could write
 --
 -- @
