@@ -49,9 +49,7 @@ module Control.Monad.Logic (
     fromLogicT,
     fromLogicTWith,
     hoistLogicT,
-    embedLogicT,
-    module Control.Monad,
-    module Trans
+    embedLogicT
   ) where
 
 import Control.Applicative
@@ -61,7 +59,6 @@ import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity (Identity(..))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans (MonadTrans(..))
-import qualified Control.Monad.Trans as Trans
 #if MIN_VERSION_base(4,8,0)
 import Control.Monad.Zip (MonadZip (..))
 #endif

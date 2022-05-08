@@ -10,6 +10,7 @@ import           Control.Arrow ( left )
 import           Control.Concurrent ( threadDelay )
 import           Control.Concurrent.Async ( race )
 import           Control.Exception
+import           Control.Monad
 import           Control.Monad.Identity
 import           Control.Monad.Logic
 import           Control.Monad.Reader
