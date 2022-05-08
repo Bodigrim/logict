@@ -265,3 +265,10 @@ jobs:
         run: |
           rm -f cabal.project.local
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
+      - name: prepare for constraint sets
+        run: |
+          rm -f cabal.project.local
+      - name: constraint set mtl-2.3
+        run: |
+          if [ $((HCNUMVER >= 80600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl >= 2.3' --constraint='transformers >= 0.6' --dependencies-only -j2 all ; fi
+          if [ $((HCNUMVER >= 80600)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='mtl >= 2.3' --constraint='transformers >= 0.6' all ; fi
