@@ -1,7 +1,20 @@
+# 0.8.0.0
+
+* Breaking change:
+  do not re-export `Control.Monad` and `Control.Monad.Trans` from `Control.Monad.Logic`.
+* Generalize `instance Traversable (LogicT Identity)`
+  to `instance (Traversable m, Monad m) => Traversable (LogicT m)`.
+* Add conversion functions `fromLogicT` and `fromLogicTWith` to facilitate
+  interoperation with [`list-t`](https://hackage.haskell.org/package/list-t)
+  and [`logict-sequence`](https://hackage.haskell.org/package/logict-sequence) packages.
+* Add `hoistLogicT` and `embedLogicT` to convert `LogicT` computations
+  from one underlying monad to another.
+
 # 0.7.1.0
 
 * Improve documentation.
-* Relax superclasses of `MonadLogic` to `Monad` and `Alternative` instead of `MonadPlus`.
+* Breaking change:
+  relax superclasses of `MonadLogic` to `Monad` and `Alternative` instead of `MonadPlus`.
 
 # 0.7.0.3
 
