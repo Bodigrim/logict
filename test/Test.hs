@@ -18,15 +18,19 @@ import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
 import           Data.Maybe
 
-#if MIN_VERSION_base(4,9,0)
-#if MIN_VERSION_base(4,11,0)
-#else
+#if MIN_VERSION_base(4,9,0) && !MIN_VERSION_base(4,11,0)
 import           Data.Semigroup (Semigroup (..))
 #endif
-#else
+
+-- required by base < 4.9 OR CPS Writer test
+#if !MIN_VERSION_base(4,9,0) || MIN_VERSION_mtl(2,3,0)
 import           Data.Monoid
 #endif
 
+#if MIN_VERSION_mtl(2,3,0)
+import qualified Control.Monad.Writer.CPS as CpsW (WriterT, execWriterT, tell)
+import qualified Control.Monad.Trans.Writer.CPS as CpsW (runWriterT)
+#endif
 
 monadReader1 :: Assertion
 monadReader1 = assertEqual "should be equal" [5 :: Int] $
@@ -52,6 +56,12 @@ monadReader3 = assertEqual "should be equal" [5,3] $
 nats, odds, oddsOrTwo,
   oddsOrTwoUnfair, oddsOrTwoFair,
   odds5down :: Monad m => LogicT m Integer
+
+-- | A `WriterT` version of `evalStateT`.
+#if MIN_VERSION_mtl(2,3,0)
+evalWriterT :: (Monad m, Monoid w) => CpsW.WriterT w m a -> m a
+evalWriterT = fmap fst . CpsW.runWriterT
+#endif
 
 #if MIN_VERSION_base(4,8,0)
 nats = pure 0 `mplus` ((1 +) <$> nats)
@@ -152,6 +162,13 @@ main = defaultMain $
               z = mzero
           in assertBool "ReaderT" $ null $ catMaybes $ runReaderT (msplit z) 0
 
+#if MIN_VERSION_mtl(2,3,0)
+        , testCase "msplit mzero :: CPS WriterT" $
+          let z :: CpsW.WriterT (Sum Int) [] String
+              z = mzero
+          in assertBool "CPS WriterT" $ null $ catMaybes (evalWriterT (msplit z))
+#endif
+
         , testCase "msplit mzero :: LogicT" $
           let z :: LogicT [] String
               z = mzero
@@ -180,6 +197,15 @@ main = defaultMain $
                 extract = fmap fst . catMaybes . flip runReaderT sample
             extract (msplit op) @?= [sample]
             extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= []
+
+#if MIN_VERSION_mtl(2,3,0)
+        , testCase "msplit CPS WriterT" $ do
+            let op :: CpsW.WriterT (Sum Integer) [] ()
+                op = CpsW.tell 1 `mplus` op
+                extract = CpsW.execWriterT
+            extract (msplit op) @?= [1]
+            extract (msplit op >>= \(Just (_,nxt)) -> msplit nxt) @?= [2]
+#endif
 
         , testCase "msplit LogicT" $ do
             let op :: LogicT [] Integer
@@ -239,6 +265,13 @@ main = defaultMain $
       , testCase "fair disjunction :: ReaderT" $ [1,2,3,5] @=?
         (take 4 $ runReaderT (let oddsR = return 1 `mplus` liftM (2+) oddsR
                               in oddsR `interleave` return (2 :: Integer)) "go")
+
+#if MIN_VERSION_mtl(2,3,0)
+      , testCase "fair disjunction :: CPS WriterT" $ [1,2,3,5] @=?
+        (take 4 $ evalWriterT (let oddsW :: CpsW.WriterT [Char] [] Integer
+                                   oddsW = return 1 `mplus` liftM (2+) oddsW
+                                in oddsW `interleave` return (2 :: Integer)))
+#endif
 
       , testCase "fair disjunction :: strict StateT" $ [1,2,3,5] @=?
         (take 4 $ SS.evalStateT (let oddsS = return 1 `mplus` liftM (2+) oddsS
@@ -343,6 +376,17 @@ main = defaultMain $
                                     if even x then return x else mzero
                              ) "env")
 
+#if MIN_VERSION_mtl(2,3,0)
+      , testCase "fair conjunction :: CPS WriterT" $ [2,4,6,8] @=?
+        (take 4 $ evalWriterT $
+         (let oddsW :: CpsW.WriterT [Char] [] Integer
+              oddsW = return (1 :: Integer) `mplus` liftM (2+) oddsW
+              oddsPlus n = oddsW >>= \a -> return (a + n)
+           in do x <- (return 0 `mplus` return 1) >>- oddsPlus
+                 if even x then return x else mzero
+         ))
+#endif
+
       , testCase "fair conjunction :: strict StateT" $ [2,4,6,8] @=?
         (take 4 $ SS.evalStateT (let oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
                                      oddsPlus n = oddsS >>= \a -> return (a + n)
@@ -426,6 +470,20 @@ main = defaultMain $
       in testCase "indivisible odds :: ReaderT" $ [3,5,7,11,13,17,19,23,29,31] @=?
          (take 10 $ runReaderT oc "env")
 
+#if MIN_VERSION_mtl(2,3,0)
+    , let iota n = msum (map return [1..n])
+          oddsW = return (1 :: Integer) `mplus` liftM (2+) oddsW
+          oc :: CpsW.WriterT [Char] [] Integer
+          oc = do n <- oddsW
+                  guard (n > 1)
+                  ifte (do d <- iota (n - 1)
+                           guard (d > 1 && n `mod` d == 0))
+                    (const mzero)
+                    (return n)
+      in testCase "indivisible odds :: CPS WriterT" $ [3,5,7,11,13,17,19,23,29,31] @=?
+         (take 10 $ (fmap fst . CpsW.runWriterT) oc)
+#endif
+
     , let iota n = msum (map return [1..n])
           oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
           oc = do n <- oddsS
@@ -498,6 +556,14 @@ main = defaultMain $
       (take 5 $ runReaderT (do v <- foldr (mplus . return) mzero [(1::Integer)..]
                                lnot (isEven v)
                                return v) "env")
+
+#if MIN_VERSION_mtl(2,3,0)
+    , testCase "inversion :: CPS WriterT" $ [1,3,5,7,9] @=?
+      (take 5 $ (evalWriterT :: CpsW.WriterT [Char] [] Integer -> [Integer])
+       (do v <- foldr (mplus . return) mzero [(1::Integer)..]
+           lnot (isEven v)
+           return v))
+#endif
 
     , testCase "inversion :: strict StateT" $ [1,3,5,7,9] @=?
       (take 5 $ SS.evalStateT (do v <- foldr (mplus . return) mzero [(1::Integer)..]
