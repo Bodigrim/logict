@@ -33,6 +33,11 @@ import Control.Monad.Trans (MonadTrans(..))
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
 
+#if MIN_VERSION_mtl(2,3,0)
+import qualified Control.Monad.Writer.CPS as CpsW
+import qualified Control.Monad.Trans.Writer.CPS as CpsW(writerT, runWriterT)
+#endif
+
 -- | A backtracking, logic programming monad.
 class (Monad m, Alternative m) => MonadLogic m where
     -- | Attempts to __split__ the computation, giving access to the first
@@ -346,6 +351,15 @@ instance MonadLogic m => MonadLogic (ReaderT e m) where
                                    case r of
                                      Nothing -> pure Nothing
                                      Just (a, m) -> pure (Just (a, lift m))
+
+#if MIN_VERSION_mtl(2,3,0)
+instance (Monoid w, MonadLogic m, MonadPlus m) => MonadLogic (CpsW.WriterT w m) where
+    msplit wm = CpsW.writerT $ do
+      r <- msplit $ CpsW.runWriterT wm
+      case r of
+        Nothing -> pure (Nothing, mempty)
+        Just ((a, w), m) -> pure (Just (a, CpsW.writerT m), w)
+#endif
 
 -- | See note on splitting above.
 instance (MonadLogic m, MonadPlus m) => MonadLogic (StrictST.StateT s m) where
