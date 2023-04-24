@@ -26,16 +26,21 @@
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
-import Control.Applicative
-import Control.Monad
+import Prelude ()
+
+import Control.Applicative (Alternative(..), Applicative(..))
+import Control.Monad (MonadPlus, Monad(..))
 import Control.Monad.Reader (ReaderT(..))
 import Control.Monad.Trans (MonadTrans(..))
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
+import Data.Function (const, ($))
+import Data.Maybe (Maybe(..), maybe)
 
 #if MIN_VERSION_mtl(2,3,0)
 import qualified Control.Monad.Writer.CPS as CpsW
-import qualified Control.Monad.Trans.Writer.CPS as CpsW(writerT, runWriterT)
+import qualified Control.Monad.Trans.Writer.CPS as CpsW (writerT, runWriterT)
+import Data.Monoid
 #endif
 
 -- | A backtracking, logic programming monad.

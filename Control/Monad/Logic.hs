@@ -52,9 +52,10 @@ module Control.Monad.Logic (
     embedLogicT
   ) where
 
-import Control.Applicative
+import Prelude (error, (-))
 
-import Control.Monad
+import Control.Applicative (Alternative(..), Applicative, liftA2, pure, (<*>))
+import Control.Monad (join, MonadPlus(..), liftM, Monad(..), fail)
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity (Identity(..))
 import Control.Monad.IO.Class (MonadIO(..))
@@ -67,15 +68,20 @@ import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.State.Class (MonadState(..))
 import Control.Monad.Error.Class (MonadError(..))
 
-#if !MIN_VERSION_base(4,8,0)
-import Data.Monoid (Monoid (..))
-#endif
-
 #if MIN_VERSION_base(4,9,0)
 import Data.Semigroup (Semigroup (..))
 #endif
 
+import Data.Bool (otherwise)
+import Data.Eq ((==))
 import qualified Data.Foldable as F
+import Data.Function (($), (.), const)
+import Data.Functor (Functor(..), (<$>))
+import Data.Int
+import qualified Data.List as L
+import Data.Maybe (Maybe(..))
+import Data.Monoid (Monoid (..))
+import Data.Ord ((<=))
 import qualified Data.Traversable as T
 
 import Control.Monad.Logic.Class
@@ -100,7 +106,7 @@ newtype LogicT m a =
 #if !MIN_VERSION_base(4,13,0)
 observeT :: Monad m => LogicT m a -> m a
 #else
-observeT :: MonadFail m => LogicT m a -> m a
+observeT :: Fail.MonadFail m => LogicT m a -> m a
 #endif
 observeT lt = unLogicT lt (const . return) (fail "No answer.")
 
@@ -350,7 +356,7 @@ observeAll = runIdentity . observeAllT
 --
 -- @since 0.2
 observeMany :: Int -> Logic a -> [a]
-observeMany i = take i . observeAll
+observeMany i = L.take i . observeAll
 -- Implementing 'observeMany' using 'observeManyT' is quite costly,
 -- because it calls 'msplit' multiple times.
 
@@ -405,7 +411,7 @@ instance MonadPlus (LogicT m) where
 -- | @since 0.7.0.3
 instance Semigroup (LogicT m a) where
   (<>) = mplus
-  sconcat = foldr1 mplus
+  sconcat = F.foldr1 mplus
 #endif
 
 -- | @since 0.7.0.3
