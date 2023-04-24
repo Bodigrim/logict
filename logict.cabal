@@ -41,11 +41,11 @@ library
   build-depends:
     base >=4.3 && <5,
     mtl >=2.0 && <2.4,
-    transformers
+    transformers <0.7
 
   if impl(ghc <8.0)
     build-depends:
-      fail
+      fail < 4.10
 
 executable grandparents
   buildable: False
@@ -67,11 +67,11 @@ test-suite logict-tests
 
   build-depends:
     base,
-    async >=2.0,
+    async >=2.0 && <2.3,
     logict,
     mtl,
     transformers,
-    tasty,
-    tasty-hunit
+    tasty <1.5,
+    tasty-hunit <0.11
 
   hs-source-dirs: test
