@@ -1,3 +1,7 @@
+# 0.8.1.0
+
+* Add `instance MonadLogic (Control.Monad.Writer.CPS.WriterT w m)`.
+
 # 0.8.0.0
 
 * Breaking change:

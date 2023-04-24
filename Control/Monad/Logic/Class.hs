@@ -39,6 +39,16 @@ import qualified Control.Monad.Trans.Writer.CPS as CpsW(writerT, runWriterT)
 #endif
 
 -- | A backtracking, logic programming monad.
+--
+-- This package offers one implementation of 'MonadLogic': 'Control.Monad.Logic.LogicT'.
+-- Other notable implementations:
+--
+-- * https://hackage.haskell.org/package/list-t/docs/ListT.html#t:ListT
+-- * https://hackage.haskell.org/package/logict-sequence/docs/Control-Monad-Logic-Sequence.html#t:SeqT
+-- * https://hackage.haskell.org/package/logict-state/docs/Control-Monad-LogicState.html#t:LogicStateT
+-- * https://hackage.haskell.org/package/streamt/docs/Control-Monad-Stream.html#t:StreamT
+--
+-- @since 0.2
 class (Monad m, Alternative m) => MonadLogic m where
     -- | Attempts to __split__ the computation, giving access to the first
     --   result. Satisfies the following laws:
@@ -271,6 +281,8 @@ class (Monad m, Alternative m) => MonadLogic m where
     --
     --   Here if @divisors@ never succeeds, then the 'lnot' will
     --   succeed and the number will be declared as prime.
+    --
+    -- @since 0.7.0.0
     lnot :: m a -> m ()
 
     -- | Logical __conditional.__ The equivalent of
@@ -328,6 +340,8 @@ class (Monad m, Alternative m) => MonadLogic m where
 -- | The inverse of 'msplit'. Satisfies the following law:
 --
 -- > msplit m >>= reflect == m
+--
+-- @since 0.2
 reflect :: Alternative m => Maybe (a, m a) -> m a
 reflect Nothing = empty
 reflect (Just (a, m)) = pure a <|> m
@@ -353,6 +367,7 @@ instance MonadLogic m => MonadLogic (ReaderT e m) where
                                      Just (a, m) -> pure (Just (a, lift m))
 
 #if MIN_VERSION_mtl(2,3,0)
+-- | @since 0.8.1.0
 instance (Monoid w, MonadLogic m, MonadPlus m) => MonadLogic (CpsW.WriterT w m) where
     msplit wm = CpsW.writerT $ do
       r <- msplit $ CpsW.runWriterT wm

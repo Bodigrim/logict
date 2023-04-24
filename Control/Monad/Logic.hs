@@ -88,12 +88,15 @@ import Control.Monad.Logic.Class
 -- (see 'Logic'). Thus 'LogicT' @m@ for non-trivial @m@ can be imagined
 -- as a list, pattern matching on which causes monadic effects.
 --
+-- @since 0.2
 newtype LogicT m a =
     LogicT { unLogicT :: forall r. (a -> m r -> m r) -> m r -> m r }
 
 -------------------------------------------------------------------------
 -- | Extracts the first result from a 'LogicT' computation,
 -- failing if there are no results at all.
+--
+-- @since 0.2
 #if !MIN_VERSION_base(4,13,0)
 observeT :: Monad m => LogicT m a -> m a
 #else
@@ -124,11 +127,15 @@ observeT lt = unLogicT lt (const . return) (fail "No answer.")
 -- In general, if the underlying monad manages control flow then
 -- 'observeAllT' may be unproductive under infinite branching,
 -- and 'observeManyT' should be used instead.
+--
+-- @since 0.2
 observeAllT :: Applicative m => LogicT m a -> m [a]
 observeAllT m = unLogicT m (fmap . (:)) (pure [])
 
 -------------------------------------------------------------------------
 -- | Extracts up to a given number of results from a 'LogicT' computation.
+--
+-- @since 0.2
 observeManyT :: Monad m => Int -> LogicT m a -> m [a]
 observeManyT n m
     | n <= 0 = return []
@@ -163,6 +170,7 @@ observeManyT n m
 -- >>> runLogicT (yieldWords ["foo", "bar"]) showFirst (putStrLn "none!")
 -- foo
 --
+-- @since 0.2
 runLogicT :: LogicT m a -> (a -> m r -> m r) -> m r -> m r
 runLogicT (LogicT r) = r
 
@@ -179,6 +187,8 @@ runLogicT (LogicT r) = r
 --
 -- 'show' $ fromLogicT @ListT l
 -- @
+--
+-- @since 0.8.0.0
 #if MIN_VERSION_base(4,8,0)
 fromLogicT :: (Alternative (t m), MonadTrans t, Monad m, Monad (t m))
   => LogicT m a -> t m a
@@ -202,6 +212,8 @@ fromLogicT = fromLogicTWith lift
 -- The first argument should be a
 -- <https://hackage.haskell.org/package/mmorph/docs/Control-Monad-Morph.html monad morphism>.
 -- to produce sensible results.
+--
+-- @since 0.8.0.0
 fromLogicTWith :: (Applicative m, Monad n, Alternative n)
   => (forall x. m x -> n x) -> LogicT m a -> n a
 fromLogicTWith p (LogicT f) = join . p $
@@ -217,6 +229,8 @@ fromLogicTWith p (LogicT f) = join . p $
 -- The first argument should be a
 -- <https://hackage.haskell.org/package/mmorph/docs/Control-Monad-Morph.html monad morphism>.
 -- to produce sensible results.
+--
+-- @since 0.8.0.0
 hoistLogicT :: (Applicative m, Monad n) => (forall x. m x -> n x) -> LogicT m a -> LogicT n a
 hoistLogicT f = fromLogicTWith (lift . f)
 
@@ -225,6 +239,8 @@ hoistLogicT f = fromLogicTWith (lift . f)
 -- The first argument should be a
 -- <https://hackage.haskell.org/package/mmorph/docs/Control-Monad-Morph.html monad morphism>.
 -- to produce sensible results.
+--
+-- @since 0.8.0.0
 embedLogicT :: Applicative m => (forall a. m a -> LogicT n a) -> LogicT m b -> LogicT n b
 embedLogicT f = fromLogicTWith f
 
@@ -247,10 +263,13 @@ embedLogicT f = fromLogicTWith f
 -- > toList :: Logic a -> [a]
 -- > toList (LogicT fld) = runIdentity $ fld (\x (Identity xs) -> Identity (x : xs)) (Identity [])
 --
+-- @since 0.5.0
 type Logic = LogicT Identity
 
 -------------------------------------------------------------------------
 -- | A smart constructor for 'Logic' computations.
+--
+-- @since 0.5.0
 logic :: (forall r. (a -> r -> r) -> r -> r) -> Logic a
 logic f = LogicT $ \k -> Identity .
                          f (\a -> runIdentity . k a . Identity) .
@@ -268,6 +287,7 @@ logic f = LogicT $ \k -> Identity .
 --
 -- Since 'Logic' is isomorphic to a list, 'observe' is analogous to 'head'.
 --
+-- @since 0.2
 observe :: Logic a -> a
 observe lt = runIdentity $ unLogicT lt (const . pure) (error "No answer.")
 
@@ -280,6 +300,7 @@ observe lt = runIdentity $ unLogicT lt (const . pure) (error "No answer.")
 -- 'observeAll' reveals a half of the isomorphism between 'Logic'
 -- and lists. See description of 'runLogic' for the other half.
 --
+-- @since 0.2
 observeAll :: Logic a -> [a]
 observeAll = runIdentity . observeAllT
 
@@ -292,6 +313,7 @@ observeAll = runIdentity . observeAllT
 --
 -- Since 'Logic' is isomorphic to a list, 'observeMany' is analogous to 'take'.
 --
+-- @since 0.2
 observeMany :: Int -> Logic a -> [a]
 observeMany i = take i . observeAll
 -- Implementing 'observeMany' using 'observeManyT' is quite costly,
@@ -311,6 +333,7 @@ observeMany i = take i . observeAll
 -- a half of the isomorphism between 'Logic' and lists.
 -- See description of 'observeAll' for the other half.
 --
+-- @since 0.2
 runLogic :: Logic a -> (a -> r -> r) -> r -> r
 runLogic l s f = runIdentity $ unLogicT l si fi
  where
@@ -335,6 +358,7 @@ instance Monad (LogicT m) where
     fail = Fail.fail
 #endif
 
+-- | @since 0.6.0.3
 instance Fail.MonadFail (LogicT m) where
     fail _ = LogicT $ \_ fk -> fk
 
@@ -343,11 +367,13 @@ instance MonadPlus (LogicT m) where
   mplus = (<|>)
 
 #if MIN_VERSION_base(4,9,0)
+-- | @since 0.7.0.3
 instance Semigroup (LogicT m a) where
   (<>) = mplus
   sconcat = foldr1 mplus
 #endif
 
+-- | @since 0.7.0.3
 instance Monoid (LogicT m a) where
   mempty = empty
 #if MIN_VERSION_base(4,9,0)
@@ -374,14 +400,17 @@ instance (Monad m) => MonadLogic (LogicT m) where
 
 #if MIN_VERSION_base(4,8,0)
 
+-- | @since 0.5.0
 instance {-# OVERLAPPABLE #-} (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
     foldMap f m = F.fold $ unLogicT m (fmap . mappend . f) (pure mempty)
 
+-- | @since 0.5.0
 instance {-# OVERLAPPING #-} F.Foldable (LogicT Identity) where
     foldr f z m = runLogic m f z
 
 #else
 
+-- | @since 0.5.0
 instance (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
     foldMap f m = F.fold $ unLogicT m (fmap . mappend . f) (pure mempty)
 
@@ -423,13 +452,17 @@ fromML (ML m) = lift m >>= \r -> case r of
   ConsML a xs -> pure a <|> fromML xs
 
 #if MIN_VERSION_base(4,8,0)
+-- | @since 0.5.0
 instance {-# OVERLAPPING #-} T.Traversable (LogicT Identity) where
   traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure empty)
     where
       cons a l' = pure a <|> l'
+
+-- | @since 0.8.0.0
 instance {-# OVERLAPPABLE #-} (Monad m, T.Traversable m) => T.Traversable (LogicT m) where
   traverse f = fmap fromML . T.traverse f . toML
 #else
+-- | @since 0.8.0.0
 instance (Monad m, Applicative m, T.Traversable m) => T.Traversable (LogicT m) where
   traverse f = fmap fromML . T.traverse f . toML
 #endif
@@ -462,25 +495,24 @@ unzipML (ML m)
           remains = unzipML listab
           (la, lb) = remains
 
+-- | @since 0.8.0.0
 instance MonadZip m => MonadZip (LogicT m) where
   mzipWith f xs ys = fromML $ zipWithML f (toML xs) (toML ys)
   munzip xys = case unzipML (toML xys) of
     (xs, ys) -> (fromML xs, fromML ys)
 #endif
 
--- Needs undecidable instances
 instance MonadReader r m => MonadReader r (LogicT m) where
     ask = lift ask
     local f (LogicT m) = LogicT $ \sk fk -> do
         env <- ask
         local f $ m ((local (const env) .) . sk) (local (const env) fk)
 
--- Needs undecidable instances
 instance MonadState s m => MonadState s (LogicT m) where
     get = lift get
     put = lift . put
 
--- Needs undecidable instances
+-- | @since 0.4
 instance MonadError e m => MonadError e (LogicT m) where
   throwError = lift . throwError
   catchError m h = LogicT $ \sk fk -> let
