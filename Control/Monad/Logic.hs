@@ -263,6 +263,41 @@ embedLogicT f = fromLogicTWith f
 -- > toList :: Logic a -> [a]
 -- > toList (LogicT fld) = runIdentity $ fld (\x (Identity xs) -> Identity (x : xs)) (Identity [])
 --
+-- Here is a systematic derivation of the isomorphism. We start with observing
+-- that @[a]@ is isomorphic to a fix point of a non-recursive
+-- base algebra @Fix@ (@ListF@ @a@):
+--
+-- > newtype Fix f = Fix (f (Fix f))
+-- > data ListF a r = ConsF a r | NilF deriving (Functor)
+-- >
+-- > cata :: Functor f => (f r -> r) -> Fix f -> r
+-- > cata f = go where go (Fix x) = f (fmap go x)
+-- >
+-- > from :: [a] -> Fix (ListF a)
+-- > from = foldr (\a acc -> Fix (ConsF a acc)) (Fix NilF)
+-- >
+-- > to :: Fix (ListF a) -> [a]
+-- > to = cata (\case ConsF a r -> a : r; NilF -> [])
+--
+-- Further, @Fix@ (@ListF@ @a@) is isomorphic to Boehm-Berarducci encoding @ListC@ @a@:
+--
+-- > newtype ListC a = ListC (forall r. (ListF a r -> r) -> r)
+-- >
+-- > from :: Fix (ListF a) -> ListC a
+-- > from xs = ListC (\f -> cata f xs)
+-- >
+-- > to :: ListC a -> Fix (ListF a)
+-- > to (ListC f) = f Fix
+--
+-- Finally, @ListF@ @a@ @r@ → @r@ is isomorphic to a pair (@a@ → @r@ → @r@, @r@),
+-- so @ListC@ is isomorphic to the 'Logic' type modulo 'Identity' wrappers:
+--
+-- > newtype Logic a = Logic (forall r. (a -> r -> r) -> r -> r)
+--
+-- And wrapping every occurence of @r@ into @m@ gives us 'LogicT':
+--
+-- > newtype LogicT m a = Logic (forall r. (a -> m r -> m r) -> m r -> m r)
+--
 -- @since 0.5.0
 type Logic = LogicT Identity
 
