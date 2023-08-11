@@ -68,6 +68,8 @@ import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.State.Class (MonadState(..))
 import Control.Monad.Error.Class (MonadError(..))
 
+import Control.Monad.Catch
+
 #if MIN_VERSION_base(4,9,0)
 import Data.Semigroup (Semigroup (..))
 #endif
@@ -558,4 +560,12 @@ instance MonadError e m => MonadError e (LogicT m) where
   throwError = lift . throwError
   catchError m h = LogicT $ \sk fk -> let
       handle r = r `catchError` \e -> unLogicT (h e) sk fk
+    in handle $ unLogicT m (\a -> sk a . handle) fk
+
+instance MonadThrow m => MonadThrow (LogicT m) where
+  throwM = lift . throwM
+
+instance MonadCatch m => MonadCatch (LogicT m) where
+  catch m h = LogicT $ \sk fk -> let
+      handle r = r `catch` \e -> unLogicT (h e) sk fk
     in handle $ unLogicT m (\a -> sk a . handle) fk
