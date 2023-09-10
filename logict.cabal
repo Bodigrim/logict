@@ -72,7 +72,7 @@ test-suite logict-tests
     logict,
     mtl,
     transformers,
-    tasty <1.5,
+    tasty <1.6,
     tasty-hunit <0.11
 
   hs-source-dirs: test
