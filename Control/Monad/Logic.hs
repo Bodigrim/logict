@@ -21,6 +21,7 @@
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -31,6 +32,9 @@
 #else
 {-# LANGUAGE Trustworthy           #-}
 #endif
+
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Avoid restricted function" #-}
 
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,
@@ -56,7 +60,7 @@ module Control.Monad.Logic (
 import Prelude (error, (-))
 
 import Control.Applicative (Alternative(..), Applicative, liftA2, pure, (<*>))
-import Control.Monad (join, MonadPlus(..), liftM, Monad(..), fail)
+import Control.Monad (join, MonadPlus(..), Monad(..), fail)
 import Control.Monad.Catch (MonadThrow, MonadCatch, throwM, catch)
 import Control.Monad.Error.Class (MonadError(..))
 import qualified Control.Monad.Fail as Fail
@@ -86,6 +90,10 @@ import Text.Read (Read, readPrec, Lexeme (Ident), parens, lexP, prec, readListPr
 import GHC.IsList (IsList(..))
 #else
 import GHC.Exts (IsList(..))
+#endif
+
+#if MIN_VERSION_base(4,18,0)
+import qualified Data.Foldable1 as F1
 #endif
 
 import Control.Monad.Logic.Class
@@ -151,9 +159,9 @@ observeManyT n m
     | n <= 0 = return []
     | n == 1 = unLogicT m (\a _ -> return [a]) (return [])
     | otherwise = unLogicT (msplit m) sk (return [])
- where
- sk Nothing _ = return []
- sk (Just (a, m')) _ = (a:) `liftM` observeManyT (n-1) m'
+  where
+    sk Nothing _ = return []
+    sk (Just (a, m')) _ = (a:) <$> observeManyT (n-1) m'
 
 -------------------------------------------------------------------------
 -- | Runs a 'LogicT' computation with the specified initial success and
@@ -409,7 +417,11 @@ instance MonadPlus (LogicT m) where
 -- | @since 0.7.0.3
 instance Semigroup (LogicT m a) where
   (<>) = mplus
+#if MIN_VERSION_base(4,18,0)
+  sconcat = F1.foldr1 mplus
+#else
   sconcat = F.foldr1 mplus
+#endif
 
 -- | @since 0.7.0.3
 instance Monoid (LogicT m a) where
@@ -471,7 +483,7 @@ toML :: Applicative m => LogicT m a -> ML m a
 toML (LogicT q) = ML $ q (\a m -> pure $ ConsML a (ML m)) (pure EmptyML)
 
 fromML :: Monad m => ML m a -> LogicT m a
-fromML (ML m) = lift m >>= \r -> case r of
+fromML (ML m) = lift m >>= \case
   EmptyML -> empty
   ConsML a xs -> pure a <|> fromML xs
 
