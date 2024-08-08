@@ -68,7 +68,7 @@ import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.State.Class (MonadState(..))
 import Control.Monad.Error.Class (MonadError(..))
 
-import Control.Monad.Catch
+import Control.Monad.Catch (MonadThrow, MonadCatch, throwM, catch)
 
 #if MIN_VERSION_base(4,9,0)
 import Data.Semigroup (Semigroup (..))
