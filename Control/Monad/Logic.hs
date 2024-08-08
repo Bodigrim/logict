@@ -23,8 +23,14 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
-{-# LANGUAGE Safe                  #-}
+{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
+
+#if MIN_VERSION_base(4,17,0)
+{-# LANGUAGE Safe                  #-}
+#else
+{-# LANGUAGE Trustworthy           #-}
+#endif
 
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,
@@ -73,6 +79,12 @@ import Data.Monoid (Monoid (..))
 import Data.Ord ((<=))
 import Data.Semigroup (Semigroup (..))
 import qualified Data.Traversable as T
+
+#if MIN_VERSION_base(4,17,0)
+import GHC.IsList (IsList(..))
+#else
+import GHC.Exts (IsList(..))
+#endif
 
 import Control.Monad.Logic.Class
 
@@ -528,3 +540,8 @@ instance MonadCatch m => MonadCatch (LogicT m) where
   catch m h = LogicT $ \sk fk -> let
       handle r = r `catch` \e -> unLogicT (h e) sk fk
     in handle $ unLogicT m (\a -> sk a . handle) fk
+
+instance IsList (Logic a) where
+  type Item (Logic a) = a
+  fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
+  toList = observeAll
