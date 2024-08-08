@@ -76,9 +76,11 @@ import Data.Int
 import qualified Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Monoid (Monoid (..))
-import Data.Ord ((<=))
+import Data.Ord ((<=), (>))
 import Data.Semigroup (Semigroup (..))
 import qualified Data.Traversable as T
+import Text.Show (Show, showsPrec, showParen, showString, shows)
+import Text.Read (Read, readPrec, Lexeme (Ident), parens, lexP, prec, readListPrec, readListPrecDefault)
 
 #if MIN_VERSION_base(4,17,0)
 import GHC.IsList (IsList(..))
@@ -545,3 +547,15 @@ instance IsList (Logic a) where
   type Item (Logic a) = a
   fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
   toList = observeAll
+
+instance Show a => Show (Logic a) where
+  showsPrec p xs = showParen (p > 10) $
+    showString "fromList " . shows (toList xs)
+
+instance Read a => Read (Logic a) where
+  readPrec = parens $ prec 10 $ do
+    Ident "fromList" <- lexP
+    xs <- readPrec
+    return (fromList xs)
+
+  readListPrec = readListPrecDefault
