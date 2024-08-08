@@ -18,18 +18,14 @@ import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
 import           Data.Maybe
 
-#if MIN_VERSION_base(4,9,0) && !MIN_VERSION_base(4,11,0)
+#if !MIN_VERSION_base(4,11,0)
 import           Data.Semigroup (Semigroup (..))
-#endif
-
--- required by base < 4.9 OR CPS Writer test
-#if !MIN_VERSION_base(4,9,0) || MIN_VERSION_mtl(2,3,0)
-import           Data.Monoid
 #endif
 
 #if MIN_VERSION_mtl(2,3,0)
 import qualified Control.Monad.Writer.CPS as CpsW (WriterT, execWriterT, tell)
 import qualified Control.Monad.Trans.Writer.CPS as CpsW (runWriterT)
+import           Data.Monoid
 #endif
 
 monadReader1 :: Assertion
@@ -63,11 +59,7 @@ evalWriterT :: (Monad m, Monoid w) => CpsW.WriterT w m a -> m a
 evalWriterT = fmap fst . CpsW.runWriterT
 #endif
 
-#if MIN_VERSION_base(4,8,0)
 nats = pure 0 `mplus` ((1 +) <$> nats)
-#else
-nats = return 0 `mplus` liftM (1 +) nats
-#endif
 
 odds = return 1 `mplus` liftM (2+) odds
 
@@ -87,9 +79,7 @@ yieldWords = go
 
 main :: IO ()
 main = defaultMain $
-#if __GLASGOW_HASKELL__ >= 702
   localOption (mkTimeout 3000000) $  -- 3 second deadman timeout
-#endif
   testGroup "All"
   [ testGroup "Monad Reader + env"
     [ testCase "Monad Reader 1" monadReader1

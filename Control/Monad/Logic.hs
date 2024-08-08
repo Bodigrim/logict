@@ -19,17 +19,12 @@
 -------------------------------------------------------------------------
 
 {-# LANGUAGE CPP                   #-}
-{-# LANGUAGE DeriveFoldable        #-}
-{-# LANGUAGE DeriveFunctor         #-}
 {-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE Safe                  #-}
 {-# LANGUAGE UndecidableInstances  #-}
-
-#if __GLASGOW_HASKELL__ >= 704
-{-# LANGUAGE Safe #-}
-#endif
 
 module Control.Monad.Logic (
     module Control.Monad.Logic.Class,
@@ -56,23 +51,15 @@ import Prelude (error, (-))
 
 import Control.Applicative (Alternative(..), Applicative, liftA2, pure, (<*>))
 import Control.Monad (join, MonadPlus(..), liftM, Monad(..), fail)
+import Control.Monad.Catch (MonadThrow, MonadCatch, throwM, catch)
+import Control.Monad.Error.Class (MonadError(..))
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity (Identity(..))
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.Trans (MonadTrans(..))
-#if MIN_VERSION_base(4,8,0)
-import Control.Monad.Zip (MonadZip (..))
-#endif
-
 import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.State.Class (MonadState(..))
-import Control.Monad.Error.Class (MonadError(..))
-
-import Control.Monad.Catch (MonadThrow, MonadCatch, throwM, catch)
-
-#if MIN_VERSION_base(4,9,0)
-import Data.Semigroup (Semigroup (..))
-#endif
+import Control.Monad.Trans (MonadTrans(..))
+import Control.Monad.Zip (MonadZip (..))
 
 import Data.Bool (otherwise)
 import Data.Eq ((==))
@@ -84,6 +71,7 @@ import qualified Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Monoid (Monoid (..))
 import Data.Ord ((<=))
+import Data.Semigroup (Semigroup (..))
 import qualified Data.Traversable as T
 
 import Control.Monad.Logic.Class
@@ -197,13 +185,8 @@ runLogicT (LogicT r) = r
 -- @
 --
 -- @since 0.8.0.0
-#if MIN_VERSION_base(4,8,0)
 fromLogicT :: (Alternative (t m), MonadTrans t, Monad m, Monad (t m))
   => LogicT m a -> t m a
-#else
-fromLogicT :: (Alternative (t m), MonadTrans t, Applicative m, Monad m, Monad (t m))
-  => LogicT m a -> t m a
-#endif
 fromLogicT = fromLogicTWith lift
 
 -- | Convert from @'LogicT' m@ to an arbitrary logic-like monad,
@@ -409,21 +392,15 @@ instance MonadPlus (LogicT m) where
   mzero = empty
   mplus = (<|>)
 
-#if MIN_VERSION_base(4,9,0)
 -- | @since 0.7.0.3
 instance Semigroup (LogicT m a) where
   (<>) = mplus
   sconcat = F.foldr1 mplus
-#endif
 
 -- | @since 0.7.0.3
 instance Monoid (LogicT m a) where
   mempty = empty
-#if MIN_VERSION_base(4,9,0)
   mappend = (<>)
-#else
-  mappend = (<|>)
-#endif
   mconcat = F.asum
 
 instance MonadTrans LogicT where
@@ -441,8 +418,6 @@ instance (Monad m) => MonadLogic (LogicT m) where
     once m = LogicT $ \sk fk -> unLogicT m (\a _ -> sk a fk) fk
     lnot m = LogicT $ \sk fk -> unLogicT m (\_ _ -> fk) (sk () fk)
 
-#if MIN_VERSION_base(4,8,0)
-
 -- | @since 0.5.0
 instance {-# OVERLAPPABLE #-} (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
     foldMap f m = F.fold $ unLogicT m (fmap . mappend . f) (pure mempty)
@@ -450,14 +425,6 @@ instance {-# OVERLAPPABLE #-} (Applicative m, F.Foldable m) => F.Foldable (Logic
 -- | @since 0.5.0
 instance {-# OVERLAPPING #-} F.Foldable (LogicT Identity) where
     foldr f z m = runLogic m f z
-
-#else
-
--- | @since 0.5.0
-instance (Applicative m, F.Foldable m) => F.Foldable (LogicT m) where
-    foldMap f m = F.fold $ unLogicT m (fmap . mappend . f) (pure mempty)
-
-#endif
 
 -- A much simpler logic monad representation used to define the Traversable and
 -- MonadZip instances. This is essentially the same as ListT from the list-t
@@ -494,7 +461,6 @@ fromML (ML m) = lift m >>= \r -> case r of
   EmptyML -> empty
   ConsML a xs -> pure a <|> fromML xs
 
-#if MIN_VERSION_base(4,8,0)
 -- | @since 0.5.0
 instance {-# OVERLAPPING #-} T.Traversable (LogicT Identity) where
   traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure empty)
@@ -504,13 +470,7 @@ instance {-# OVERLAPPING #-} T.Traversable (LogicT Identity) where
 -- | @since 0.8.0.0
 instance {-# OVERLAPPABLE #-} (Monad m, T.Traversable m) => T.Traversable (LogicT m) where
   traverse f = fmap fromML . T.traverse f . toML
-#else
--- | @since 0.8.0.0
-instance (Monad m, Applicative m, T.Traversable m) => T.Traversable (LogicT m) where
-  traverse f = fmap fromML . T.traverse f . toML
-#endif
 
-#if MIN_VERSION_base(4,8,0)
 zipWithML :: MonadZip m => (a -> b -> c) -> ML m a -> ML m b -> ML m c
 zipWithML f = go
     where
@@ -543,7 +503,6 @@ instance MonadZip m => MonadZip (LogicT m) where
   mzipWith f xs ys = fromML $ zipWithML f (toML xs) (toML ys)
   munzip xys = case unzipML (toML xys) of
     (xs, ys) -> (fromML xs, fromML ys)
-#endif
 
 instance MonadReader r m => MonadReader r (LogicT m) where
     ask = lift ask
