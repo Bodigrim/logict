@@ -13,7 +13,7 @@
 -- <http://okmij.org/ftp/papers/LogicT.pdf Backtracking, Interleaving, and Terminating Monad Transformers>
 -- by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
 -- Note that the paper uses 'MonadPlus' vocabulary
--- ('mzero' and 'mplus'),
+-- ('Control.Monad.mzero' and 'Control.Monad.mplus'),
 -- while examples below prefer 'empty' and '<|>'
 -- from 'Alternative'.
 -------------------------------------------------------------------------
@@ -203,7 +203,7 @@ runLogicT (LogicT r) = r
 -- @
 -- import ListT (ListT)
 --
--- 'show' $ fromLogicT @ListT l
+-- 'Text.Show.show' $ fromLogicT @ListT l
 -- @
 --
 -- @since 0.8.0.0
@@ -265,7 +265,7 @@ embedLogicT f = fromLogicTWith f
 -- 'Logic' is a
 -- <http://okmij.org/ftp/tagless-final/course/Boehm-Berarducci.html Boehm-Berarducci encoding>
 -- of lists. Speaking plainly, its type is identical (up to 'Identity' wrappers)
--- to 'foldr' applied to a given list. And this list itself can be reconstructed
+-- to 'Data.List.foldr' applied to a given list. And this list itself can be reconstructed
 -- by supplying @(:)@ and @[]@.
 --
 -- > import Data.Functor.Identity
@@ -333,7 +333,7 @@ logic f = LogicT $ \k -> Identity .
 -- >>> observe empty
 -- *** Exception: No answer.
 --
--- Since 'Logic' is isomorphic to a list, 'observe' is analogous to 'head'.
+-- Since 'Logic' is isomorphic to a list, 'observe' is analogous to 'Data.List.head'.
 --
 -- @since 0.2
 observe :: Logic a -> a
@@ -359,7 +359,7 @@ observeAll = runIdentity . observeAllT
 -- >>> observeMany 5 nats
 -- [0,1,2,3,4]
 --
--- Since 'Logic' is isomorphic to a list, 'observeMany' is analogous to 'take'.
+-- Since 'Logic' is isomorphic to a list, 'observeMany' is analogous to 'Data.List.take'.
 --
 -- @since 0.2
 observeMany :: Int -> Logic a -> [a]

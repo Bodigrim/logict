@@ -13,7 +13,7 @@
 -- <http://okmij.org/ftp/papers/LogicT.pdf Backtracking, Interleaving, and Terminating Monad Transformers>
 -- by Oleg Kiselyov, Chung-chieh Shan, Daniel P. Friedman, Amr Sabry.
 -- Note that the paper uses 'MonadPlus' vocabulary
--- ('mzero' and 'mplus'),
+-- ('Control.Monad.mzero' and 'Control.Monad.mplus'),
 -- while examples below prefer 'empty' and '<|>'
 -- from 'Alternative'.
 -------------------------------------------------------------------------
@@ -216,6 +216,14 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   either.  Instead, it is recommended to carefully use explicit
     --   '>>-' only when needed.
     --
+    --   Here is an action of '(>>-)' on lists:
+    --
+    --   >>> [10,20..50] >>- (\x -> map (x +) [1..5])
+    --   [11,21,12,31,13,22,14,41,15,23,32,24,51,25,33,42,34,52,35,43,53,44,54,45,55]
+    --
+    --   The result is @map (10 +) [1..5]@ 'interleave'd
+    --   with @[20,30..50] >>- (\x -> map (x +) [1..5])@.
+    --
     (>>-)      :: m a -> (a -> m b) -> m b
     infixl 1 >>-
 
@@ -300,7 +308,7 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   > ifte (pure a <|> m) th el == th a <|> (m >>= th)
     --
     --   For example, the previous @prime@ function returned nothing
-    --   if the number was not prime, but if it should return 'False'
+    --   if the number was not prime, but if it should return 'Data.Bool.False'
     --   instead, the following can be used:
     --
     --   > choose = foldr ((<|>) . pure) empty
