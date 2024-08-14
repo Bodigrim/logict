@@ -218,11 +218,14 @@ class (Monad m, Alternative m) => MonadLogic m where
     --
     --   Here is an action of '(>>-)' on lists:
     --
-    --   >>> [10,20..50] >>- (\x -> map (x +) [1..5])
-    --   [11,21,12,31,13,22,14,41,15,23,32,24,51,25,33,42,34,52,35,43,53,44,54,45,55]
+    --   >>> take 20 $ [100,200..500] >>- (\x -> map (x +) [1..])
+    --   [101,201,102,301,103,202,104,401,105,203,106,302,107,204,108,501,109,205,110,303]
     --
-    --   The result is @map (10 +) [1..5]@ 'interleave'd
-    --   with @[20,30..50] >>- (\x -> map (x +) [1..5])@.
+    --   The result is @map (100 +) [1..]@ 'interleave'd
+    --   with @[200,300..500] >>- (\x -> map (x +) [1..])@.
+    --   You can see that a half of the numbers starts from 1,
+    --   a quarter starts from 2, and so on exponentially.
+    --   One could argue that `(>>-)` is a very __unfair__ conjunction!
     --
     (>>-)      :: m a -> (a -> m b) -> m b
     infixl 1 >>-
