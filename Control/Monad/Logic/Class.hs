@@ -212,7 +212,7 @@ class (Monad m, Alternative m) => MonadLogic m where
     --   >   (\a -> (oddsPlus a >>- \x -> if even x then pure x else empty))
     --
     --   Since do notation desugaring results in the latter, the
-    --   @RebindableSyntax@ language pragma cannot easily be used
+    --   @RebindableSyntax@ or @QualifiedDo@ language pragmas cannot easily be used
     --   either.  Instead, it is recommended to carefully use explicit
     --   '>>-' only when needed.
     --

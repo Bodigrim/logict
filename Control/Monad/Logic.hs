@@ -106,6 +106,22 @@ import Control.Monad.Logic.Class
 -- (see 'Logic'). Thus 'LogicT' @m@ for non-trivial @m@ can be imagined
 -- as a list, pattern matching on which causes monadic effects.
 --
+-- It's important to remember that 'LogicT' on its own is just
+-- a lawful list monad transformer, adding a nondeterministic effect,
+-- and its 'Monad' instance behaves just as @instance@ 'Monad' @[]@:
+--
+-- >>> :set -XOverloadedLists
+-- >>> observeMany 9 $ do {x <- [100,200] :: Logic Int; fmap (+x) [1..]}
+-- [101,102,103,104,105,106,107,108,109]
+-- >>> observeMany 9 $ do {[100,200] >>= \x -> fmap (+x) [1..] :: Logic Int}
+-- [101,102,103,104,105,106,107,108,109]
+--
+-- One should explicitly use methods of 'MonadLogic' such as '(>>-)' and 'interleave'
+-- to get fair conjunction / disjunction:
+--
+-- >>> observeMany 9 $ do {[100,200] >>- \x -> fmap (+x) [1..] :: Logic Int}
+-- [101,201,102,202,103,203,104,204,105]
+--
 -- @since 0.2
 newtype LogicT m a =
     LogicT { unLogicT :: forall r. (a -> m r -> m r) -> m r -> m r }
@@ -260,6 +276,12 @@ embedLogicT f = fromLogicTWith f
 -------------------------------------------------------------------------
 -- | The basic 'Logic' monad, for performing backtracking computations
 -- returning values (e.g. 'Logic' @a@ will return values of type @a@).
+--
+-- It's important to remember that 'Logic' on its own is just
+-- a lawful list monad, behaving exactly as @instance@ 'Monad' @[]@.
+-- One should explicitly use methods of 'MonadLogic' such as '(>>-)' and 'interleave'
+-- to get fair conjunction / disjunction. Note that usual
+-- lists have an instance of 'MonadLogic', so maybe you don't need 'Logic' at all.
 --
 -- __Technical perspective.__
 -- 'Logic' is a
