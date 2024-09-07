@@ -449,7 +449,7 @@ instance {-# OVERLAPPABLE #-} (Applicative m, F.Foldable m) => F.Foldable (Logic
     foldMap f m = F.fold $ unLogicT m (fmap . mappend . f) (pure mempty)
 
 -- | @since 0.5.0
-instance {-# OVERLAPPING #-} F.Foldable (LogicT Identity) where
+instance {-# INCOHERENT #-} F.Foldable Logic where
     foldr f z m = runLogic m f z
 
 -- A much simpler logic monad representation used to define the Traversable and
