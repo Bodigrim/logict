@@ -18,6 +18,12 @@ import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
 import           Data.Maybe
 
+#if MIN_VERSION_base(4,17,0)
+import GHC.IsList (IsList(..))
+#else
+import GHC.Exts (IsList(..))
+#endif
+
 #if !MIN_VERSION_base(4,11,0)
 import           Data.Semigroup (Semigroup (..))
 #endif
@@ -134,6 +140,12 @@ main = defaultMain $
 
     , testCase "observeMany multi" $ [5,3] @=? observeMany 2 odds5down
     , testCase "observeMany none" $ ([] :: [Integer]) @=? observeMany 2 mzero
+
+    , testCase "(>>-) Logic" $ do
+        let sample = fromList [1, 2, 3] :: Logic Integer
+        (sample >>- const (mempty :: Logic Integer)) @?= mempty
+        (sample >>- (\x -> fmap (+ x) (fromList [100, 200, 300]))) @?= fromList [101,102,201,103,301,202,203,302,303]
+        (sample >>- (\x -> if odd x then fmap (+ x) (fromList [100, 200, 300]) else mempty)) @?= fromList [101,103,201,203,301,303]
     ]
 
   --------------------------------------------------
@@ -181,6 +193,11 @@ main = defaultMain $
                 extract = fmap (fmap fst)
             extract (msplit op) @?= [Just 1]
             extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= [Just 2]
+
+        , testCase "(>>-) []" $ do
+            (sample >>- const ([] :: [Integer])) @?= []
+            (sample >>- (\x -> fmap (+ x) [100, 200, 300])) @?= [101,102,201,103,301,202,203,302,303]
+            (sample >>- (\x -> if odd x then fmap (+ x) [100, 200, 300] else [])) @?= [101,103,201,203,301,303]
 
         , testCase "msplit ReaderT" $ do
             let op = ask

@@ -19,20 +19,28 @@
 -------------------------------------------------------------------------
 
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
+
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Avoid restricted function" #-}
 
 module Control.Monad.Logic.Class (MonadLogic(..), reflect) where
 
 import Prelude ()
 
 import Control.Applicative (Alternative(..), Applicative(..))
+import Control.Exception (Exception, evaluate, catch, throw)
 import Control.Monad (MonadPlus, Monad(..))
 import Control.Monad.Reader (ReaderT(..))
 import Control.Monad.Trans (MonadTrans(..))
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
+import Data.Bool (Bool(..), otherwise)
 import Data.Function (const, ($))
+import Data.List (null)
 import Data.Maybe (Maybe(..), maybe)
+import System.IO.Unsafe (unsafePerformIO)
+import Text.Show (Show)
 
 #if MIN_VERSION_mtl(2,3,0)
 import qualified Control.Monad.Writer.CPS as CpsW
@@ -363,6 +371,20 @@ reflect (Just (a, m)) = pure a <|> m
 instance MonadLogic [] where
     msplit []     = pure Nothing
     msplit (x:xs) = pure $ Just (x, xs)
+
+    m >>- f
+      | isConstantFailure f = []
+      -- Otherwise apply the default definition
+      | otherwise = msplit m >>= maybe empty (\(a, m') -> interleave (f a) (m' >>- f))
+
+data MyException = MyException
+  deriving (Show)
+
+instance Exception MyException
+
+isConstantFailure :: (a -> [b]) -> Bool
+isConstantFailure f = unsafePerformIO $
+  evaluate (null (f (throw MyException))) `catch` (\MyException -> pure False)
 
 -- | Note that splitting a transformer does
 -- not allow you to provide different input
