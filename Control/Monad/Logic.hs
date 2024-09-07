@@ -59,7 +59,7 @@ module Control.Monad.Logic (
 
 import Prelude (error, (-))
 
-import Control.Applicative (Alternative(..), Applicative, liftA2, pure, (<*>))
+import Control.Applicative (Alternative(..), Applicative, liftA2, pure, (<*>), (*>))
 import Control.Monad (join, MonadPlus(..), Monad(..), fail)
 import Control.Monad.Catch (MonadThrow, MonadCatch, throwM, catch)
 import Control.Monad.Error.Class (MonadError(..))
@@ -416,6 +416,7 @@ instance Functor (LogicT f) where
 instance Applicative (LogicT f) where
     pure a = LogicT $ \sk fk -> sk a fk
     f <*> a = LogicT $ \sk fk -> unLogicT f (\g fk' -> unLogicT a (sk . g) fk') fk
+    m *> k = LogicT $ \sk fk -> unLogicT m (const $ unLogicT k sk) fk
 
 instance Alternative (LogicT f) where
     empty = LogicT $ \_ fk -> fk
@@ -424,6 +425,7 @@ instance Alternative (LogicT f) where
 instance Monad (LogicT m) where
     return = pure
     m >>= f = LogicT $ \sk fk -> unLogicT m (\a fk' -> unLogicT (f a) sk fk') fk
+    (>>) = (*>)
 #if !MIN_VERSION_base(4,13,0)
     fail = Fail.fail
 #endif
