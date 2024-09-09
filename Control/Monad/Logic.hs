@@ -72,15 +72,15 @@ import Control.Monad.Trans (MonadTrans(..))
 import Control.Monad.Zip (MonadZip (..))
 
 import Data.Bool (otherwise)
-import Data.Eq ((==))
+import Data.Eq (Eq, (==))
 import qualified Data.Foldable as F
-import Data.Function (($), (.), const)
+import Data.Function (($), (.), const, on)
 import Data.Functor (Functor(..), (<$>))
 import Data.Int
 import qualified Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Monoid (Monoid (..))
-import Data.Ord ((<=), (>))
+import Data.Ord (Ord, (<=), (>), compare)
 import Data.Semigroup (Semigroup (..))
 import qualified Data.Traversable as T
 import Text.Show (Show, showsPrec, showParen, showString, shows)
@@ -583,6 +583,12 @@ instance IsList (Logic a) where
   type Item (Logic a) = a
   fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
   toList = observeAll
+
+instance Eq a => Eq (Logic a) where
+  (==) = (==) `on` observeAll
+
+instance Ord a => Ord (Logic a) where
+  compare = compare `on` observeAll
 
 instance Show a => Show (Logic a) where
   showsPrec p xs = showParen (p > 10) $
