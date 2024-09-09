@@ -61,7 +61,7 @@ evalWriterT = fmap fst . CpsW.runWriterT
 
 nats = pure 0 `mplus` ((1 +) <$> nats)
 
-odds = return 1 `mplus` liftM (2+) odds
+odds = return 1 `mplus` fmap (2+) odds
 
 oddsOrTwoUnfair = odds `mplus` return 2
 oddsOrTwoFair   = odds `interleave` return 2
@@ -94,7 +94,7 @@ main = defaultMain $
       testCase "runIdentity all"  $ [0..4] @=? (take 5 $ runIdentity $ observeAllT nats)
     , testCase "runIdentity many" $ [0..4] @=? (runIdentity $ observeManyT 5 nats)
     , testCase "observeAll"       $ [0..4] @=? (take 5 $ observeAll nats)
-    , testCase "observeMany"      $ [0..4] @=? (observeMany 5 nats)
+    , testCase "observeMany"      $ [0..4] @=? observeMany 5 nats
 
     -- Ensure LogicT can be run over other base monads other than
     -- List.  Some are productive (Reader) and some are non-productive
@@ -105,7 +105,7 @@ main = defaultMain $
 
     , testCase "observeManyT can be used with Either" $
       (Right [0..4] :: Either Char [Integer]) @=?
-      (observeManyT 5 nats)
+      observeManyT 5 nats
     ]
 
   --------------------------------------------------
@@ -114,14 +114,14 @@ main = defaultMain $
     [
       testCase "runLogicT multi" $ ["Hello world !"] @=?
       let conc w o = fmap ((w `mappend` " ") `mappend`) o in
-      (runLogicT (yieldWords ["Hello", "world"]) conc (return "!"))
+      runLogicT (yieldWords ["Hello", "world"]) conc (return "!")
 
     , testCase "runLogicT none" $ ["!"] @=?
       let conc w o = fmap ((w `mappend` " ") `mappend`) o in
-      (runLogicT (yieldWords []) conc (return "!"))
+      runLogicT (yieldWords []) conc (return "!")
 
     , testCase "runLogicT first" $ ["Hello"] @=?
-      (runLogicT (yieldWords ["Hello", "world"]) (\w -> const $ return w) (return "!"))
+      runLogicT (yieldWords ["Hello", "world"]) (\w -> const $ return w) (return "!")
 
     , testCase "runLogic multi" $ 20 @=? runLogic odds5down (+) 11
     , testCase "runLogic none"  $ 11 @=? runLogic mzero (+) (11 :: Integer)
@@ -162,7 +162,7 @@ main = defaultMain $
         , testCase "msplit mzero :: LogicT" $
           let z :: LogicT [] String
               z = mzero
-          in assertBool "LogicT" $ null $ catMaybes $ concat $ observeAllT (msplit z)
+          in assertBool "LogicT" $ all (null . catMaybes) $ observeAllT (msplit z)
         , testCase "msplit mzero :: strict StateT" $
           let z :: SS.StateT Int [] String
               z = mzero
@@ -200,20 +200,20 @@ main = defaultMain $
         , testCase "msplit LogicT" $ do
             let op :: LogicT [] Integer
                 op = foldr (mplus . return) mzero sample
-                extract = fmap fst . catMaybes . concat . observeAllT
+                extract = fmap fst . concatMap catMaybes . observeAllT
             extract (msplit op) @?= [1]
             extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= [2]
 
         , testCase "msplit strict StateT" $ do
             let op :: SS.StateT Integer [] Integer
-                op = (SS.modify (+1) >> SS.get `mplus` op)
+                op = SS.modify (+1) >> SS.get `mplus` op
                 extract = fmap fst . catMaybes . flip SS.evalStateT 0
             extract (msplit op) @?= [1]
             extract (msplit op >>= \(Just (_,nxt)) -> msplit nxt) @?= [2]
 
         , testCase "msplit lazy StateT" $ do
             let op :: SL.StateT Integer [] Integer
-                op = (SL.modify (+1) >> SL.get `mplus` op)
+                op = SL.modify (+1) >> SL.get `mplus` op
                 extract = fmap fst . catMaybes . flip SL.evalStateT 0
             extract (msplit op) @?= [1]
             extract (msplit op >>= \(Just (_,nxt)) -> msplit nxt) @?= [2]
@@ -253,26 +253,26 @@ main = defaultMain $
                   in oddsOrTwoLFair)
 
       , testCase "fair disjunction :: ReaderT" $ [1,2,3,5] @=?
-        (take 4 $ runReaderT (let oddsR = return 1 `mplus` liftM (2+) oddsR
+        (take 4 $ runReaderT (let oddsR = return 1 `mplus` fmap (2+) oddsR
                               in oddsR `interleave` return (2 :: Integer)) "go")
 
 #if MIN_VERSION_mtl(2,3,0)
       , testCase "fair disjunction :: CPS WriterT" $ [1,2,3,5] @=?
         (take 4 $ evalWriterT (let oddsW :: CpsW.WriterT [Char] [] Integer
-                                   oddsW = return 1 `mplus` liftM (2+) oddsW
+                                   oddsW = return 1 `mplus` fmap (2+) oddsW
                                 in oddsW `interleave` return (2 :: Integer)))
 #endif
 
       , testCase "fair disjunction :: strict StateT" $ [1,2,3,5] @=?
-        (take 4 $ SS.evalStateT (let oddsS = return 1 `mplus` liftM (2+) oddsS
+        (take 4 $ SS.evalStateT (let oddsS = return 1 `mplus` fmap (2+) oddsS
                                   in oddsS `interleave` return (2 :: Integer)) "go")
 
       , testCase "fair disjunction :: lazy StateT" $ [1,2,3,5] @=?
-        (take 4 $ SL.evalStateT (let oddsS = return 1 `mplus` liftM (2+) oddsS
+        (take 4 $ SL.evalStateT (let oddsS = return 1 `mplus` fmap (2+) oddsS
                                   in oddsS `interleave` return (2 :: Integer)) "go")
       ]
 
-    , testGroup "fair conjunction" $
+    , testGroup "fair conjunction"
       [
         -- Using the fair conjunction operator (>>-) the test produces values
 
@@ -337,9 +337,9 @@ main = defaultMain $
         (nonTerminating $
          observeManyT 4 (let oddsPlus n = odds >>= \a -> return (a + n) in
                            (return 0 `mplus` return 1) >>-
-                           \a -> oddsPlus a >>=
+                           (oddsPlus >=>
                                  (\x -> if even x then return x else mzero)
-                        ))
+                        )))
 
         -- unfair conjunction does not terminate or produce any
         -- values: this will fail (expectedly) due to a timeout
@@ -360,7 +360,7 @@ main = defaultMain $
         )
 
       , testCase "fair conjunction :: ReaderT" $ [2,4,6,8] @=?
-        (take 4 $ runReaderT (let oddsR = return (1 :: Integer) `mplus` liftM (2+) oddsR
+        (take 4 $ runReaderT (let oddsR = return (1 :: Integer) `mplus` fmap (2+) oddsR
                                   oddsPlus n = oddsR >>= \a -> return (a + n)
                               in do x <- (return 0 `mplus` return 1) >>- oddsPlus
                                     if even x then return x else mzero
@@ -370,7 +370,7 @@ main = defaultMain $
       , testCase "fair conjunction :: CPS WriterT" $ [2,4,6,8] @=?
         (take 4 $ evalWriterT $
          (let oddsW :: CpsW.WriterT [Char] [] Integer
-              oddsW = return (1 :: Integer) `mplus` liftM (2+) oddsW
+              oddsW = return (1 :: Integer) `mplus` fmap (2+) oddsW
               oddsPlus n = oddsW >>= \a -> return (a + n)
            in do x <- (return 0 `mplus` return 1) >>- oddsPlus
                  if even x then return x else mzero
@@ -378,14 +378,14 @@ main = defaultMain $
 #endif
 
       , testCase "fair conjunction :: strict StateT" $ [2,4,6,8] @=?
-        (take 4 $ SS.evalStateT (let oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+        (take 4 $ SS.evalStateT (let oddsS = return (1 :: Integer) `mplus` fmap (2+) oddsS
                                      oddsPlus n = oddsS >>= \a -> return (a + n)
                                  in do x <- (return 0 `mplus` return 1) >>- oddsPlus
                                        if even x then return x else mzero
                                 ) "state")
 
       , testCase "fair conjunction :: lazy StateT" $ [2,4,6,8] @=?
-        (take 4 $ SL.evalStateT (let oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+        (take 4 $ SL.evalStateT (let oddsS = return (1 :: Integer) `mplus` fmap (2+) oddsS
                                      oddsPlus n = oddsS >>= \a -> return (a + n)
                                  in do x <- (return 0 `mplus` return 1) >>- oddsPlus
                                        if even x then return x else mzero
@@ -441,7 +441,7 @@ main = defaultMain $
           oddsL = [ 1 :: Integer ] `mplus` [ o | o <- [3..], odd o ]
           oc = [ n
                | n <- oddsL
-               , (n > 1)
+               , n > 1
                ] >>= \n -> ifte (do d <- iota (n - 1)
                                     guard (d > 1 && n `mod` d == 0))
                            (const mzero)
@@ -450,7 +450,7 @@ main = defaultMain $
          take 10 oc
 
     , let iota n = msum (map return [1..n])
-          oddsR = return (1 :: Integer) `mplus` liftM (2+) oddsR
+          oddsR = return (1 :: Integer) `mplus` fmap (2+) oddsR
           oc = do n <- oddsR
                   guard (n > 1)
                   ifte (do d <- iota (n - 1)
@@ -462,7 +462,7 @@ main = defaultMain $
 
 #if MIN_VERSION_mtl(2,3,0)
     , let iota n = msum (map return [1..n])
-          oddsW = return (1 :: Integer) `mplus` liftM (2+) oddsW
+          oddsW = return (1 :: Integer) `mplus` fmap (2+) oddsW
           oc :: CpsW.WriterT [Char] [] Integer
           oc = do n <- oddsW
                   guard (n > 1)
@@ -475,7 +475,7 @@ main = defaultMain $
 #endif
 
     , let iota n = msum (map return [1..n])
-          oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+          oddsS = return (1 :: Integer) `mplus` fmap (2+) oddsS
           oc = do n <- oddsS
                   guard (n > 1)
                   ifte (do d <- iota (n - 1)
@@ -486,7 +486,7 @@ main = defaultMain $
          (take 10 $ SS.evalStateT oc "state")
 
     , let iota n = msum (map return [1..n])
-          oddsS = return (1 :: Integer) `mplus` liftM (2+) oddsS
+          oddsS = return (1 :: Integer) `mplus` fmap (2+) oddsS
           oc = do n <- oddsS
                   guard (n > 1)
                   ifte (do d <- iota (n - 1)
