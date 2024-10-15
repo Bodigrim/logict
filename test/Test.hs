@@ -1,12 +1,12 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import           Control.Arrow ( left )
 import           Control.Concurrent ( threadDelay )
 import           Control.Concurrent.Async ( race )
 import           Control.Exception
@@ -16,6 +16,7 @@ import           Control.Monad.Logic
 import           Control.Monad.Reader
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
+import           Data.List (uncons)
 import           Data.Maybe
 
 #if MIN_VERSION_base(4,17,0)
@@ -585,7 +586,11 @@ main = defaultMain $
   ]
 
 safely :: IO Integer -> IO (Either String Integer)
-safely o = fmap (left (head . lines . show)) (try o :: IO (Either SomeException Integer))
+safely o = do
+  p <- try o
+  pure $ case p of
+    Left (err :: SomeException) -> Left $ maybe "" fst $ uncons $ lines $ show err
+    Right n -> Right n
 
 -- | This is used to test logic operations that don't typically
 -- terminate by running a parallel race between the operation and a
