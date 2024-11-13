@@ -1,3 +1,9 @@
+# 0.8.2.0
+
+* Add instances for `MonadThrow` and `MonadCatch`.
+* Add instances `Eq`, `Ord`, `Show`, `Read`, `IsList` for `Logic a`.
+* Speed up `instance MonadLogic Logic` with a trick to determine whether a callback is a constant failure.
+
 # 0.8.1.0
 
 * Add `instance MonadLogic (Control.Monad.Writer.CPS.WriterT w m)`.

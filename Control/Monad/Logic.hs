@@ -465,6 +465,7 @@ instance {-# OVERLAPPABLE #-} (Monad m) => MonadLogic (LogicT m) where
     once m = LogicT $ \sk fk -> unLogicT m (\a _ -> sk a fk) fk
     lnot m = LogicT $ \sk fk -> unLogicT m (\_ _ -> fk) (sk () fk)
 
+-- | @since 0.8.2.0
 instance {-# INCOHERENT #-} MonadLogic Logic where
     -- Same as in the generic instance above
     msplit m = lift $ unLogicT m ssk (return Nothing)
@@ -591,29 +592,36 @@ instance MonadError e m => MonadError e (LogicT m) where
       handle r = r `catchError` \e -> unLogicT (h e) sk fk
     in handle $ unLogicT m (\a -> sk a . handle) fk
 
+-- | @since 0.8.2.0
 instance MonadThrow m => MonadThrow (LogicT m) where
   throwM = lift . throwM
 
+-- | @since 0.8.2.0
 instance MonadCatch m => MonadCatch (LogicT m) where
   catch m h = LogicT $ \sk fk -> let
       handle r = r `catch` \e -> unLogicT (h e) sk fk
     in handle $ unLogicT m (\a -> sk a . handle) fk
 
+-- | @since 0.8.2.0
 instance IsList (Logic a) where
   type Item (Logic a) = a
   fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
   toList = observeAll
 
+-- | @since 0.8.2.0
 instance Eq a => Eq (Logic a) where
   (==) = (==) `on` observeAll
 
+-- | @since 0.8.2.0
 instance Ord a => Ord (Logic a) where
   compare = compare `on` observeAll
 
+-- | @since 0.8.2.0
 instance Show a => Show (Logic a) where
   showsPrec p xs = showParen (p > 10) $
     showString "fromList " . shows (toList xs)
 
+-- | @since 0.8.2.0
 instance Read a => Read (Logic a) where
   readPrec = parens $ prec 10 $ do
     Ident "fromList" <- lexP
