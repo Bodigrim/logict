@@ -56,7 +56,7 @@ import Prelude (error, (-))
 
 import Control.Applicative (Alternative(..), Applicative, liftA2, pure, (<*>), (*>))
 import Control.Exception (Exception, evaluate, throw)
-import Control.Monad (join, MonadPlus(..), Monad(..), fail)
+import Control.Monad (join, MonadPlus(..), Monad(..))
 import Control.Monad.Catch (MonadThrow, MonadCatch, throwM, catch)
 import Control.Monad.Error.Class (MonadError(..))
 import qualified Control.Monad.Fail as Fail
@@ -78,15 +78,17 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (Monoid (..))
 import Data.Ord (Ord, (<=), (>), compare)
 import Data.Semigroup (Semigroup (..))
-import qualified Data.Traversable as T
+import Data.Traversable (Traversable(..))
 import System.IO.Unsafe (unsafePerformIO)
 import Text.Show (Show, showsPrec, showParen, showString, shows)
 import Text.Read (Read, readPrec, Lexeme (Ident), parens, lexP, prec, readListPrec, readListPrecDefault)
 
+#ifdef __GLASGOW_HASKELL__
 #if MIN_VERSION_base(4,17,0)
 import GHC.IsList (IsList(..))
 #else
 import GHC.Exts (IsList(..))
+#endif
 #endif
 
 #if MIN_VERSION_base(4,18,0)
@@ -133,7 +135,7 @@ observeT :: Monad m => LogicT m a -> m a
 #else
 observeT :: Fail.MonadFail m => LogicT m a -> m a
 #endif
-observeT lt = unLogicT lt (const . return) (fail "No answer.")
+observeT lt = unLogicT lt (const . return) (Fail.fail "No answer.")
 
 -------------------------------------------------------------------------
 -- | Extracts all results from a 'LogicT' computation, unless blocked by the
@@ -503,15 +505,15 @@ instance {-# INCOHERENT #-} F.Foldable Logic where
 -- more compact than Maybe (a, ML m a), and the additional laziness in the
 -- latter appears to be incidental/historical.
 newtype ML m a = ML (m (MLView m a))
-  deriving (Functor, F.Foldable, T.Traversable)
+  deriving (Functor, F.Foldable, Traversable)
 
 data MLView m a = EmptyML | ConsML a (ML m a)
   deriving (Functor, F.Foldable)
 
-instance T.Traversable m => T.Traversable (MLView m) where
+instance Traversable m => Traversable (MLView m) where
   traverse _ EmptyML = pure EmptyML
   traverse f (ConsML x (ML m))
-    = liftA2 (\y ym -> ConsML y (ML ym)) (f x) (T.traverse (T.traverse f) m)
+    = liftA2 (\y ym -> ConsML y (ML ym)) (f x) (traverse (traverse f) m)
   {- The derived instance would write the second case as
    -
    -   traverse f (ConsML x xs) = liftA2 ConsML (f x) (traverse @(ML m) f xs)
@@ -533,14 +535,14 @@ fromML (ML m) = lift m >>= \case
   ConsML a xs -> pure a <|> fromML xs
 
 -- | @since 0.5.0
-instance {-# OVERLAPPING #-} T.Traversable (LogicT Identity) where
+instance {-# OVERLAPPING #-} Traversable (LogicT Identity) where
   traverse g l = runLogic l (\a ft -> cons <$> g a <*> ft) (pure empty)
     where
       cons a l' = pure a <|> l'
 
 -- | @since 0.8.0.0
-instance {-# OVERLAPPABLE #-} (Monad m, T.Traversable m) => T.Traversable (LogicT m) where
-  traverse f = fmap fromML . T.traverse f . toML
+instance {-# OVERLAPPABLE #-} (Monad m, Traversable m) => Traversable (LogicT m) where
+  traverse f = fmap fromML . traverse f . toML
 
 zipWithML :: MonadZip m => (a -> b -> c) -> ML m a -> ML m b -> ML m c
 zipWithML f = go
@@ -602,11 +604,19 @@ instance MonadCatch m => MonadCatch (LogicT m) where
       handle r = r `catch` \e -> unLogicT (h e) sk fk
     in handle $ unLogicT m (\a -> sk a . handle) fk
 
+#ifdef __GLASGOW_HASKELL__
 -- | @since 0.8.2.0
 instance IsList (Logic a) where
   type Item (Logic a) = a
   fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
   toList = observeAll
+#else
+fromList :: [a] -> Logic a
+fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
+
+toList :: Logic a -> [a]
+toList = observeAll
+#endif
 
 -- | @since 0.8.2.0
 instance Eq a => Eq (Logic a) where
