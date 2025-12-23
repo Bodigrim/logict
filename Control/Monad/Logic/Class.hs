@@ -31,7 +31,7 @@ import Prelude ()
 import Control.Applicative (Alternative(..), Applicative(..))
 import Control.Exception (Exception, evaluate, catch, throw)
 import Control.Monad (MonadPlus, Monad(..))
-import Control.Monad.Reader (ReaderT(..))
+import Control.Monad.Reader (ReaderT(..), runReaderT)
 import Control.Monad.Trans (MonadTrans(..))
 import qualified Control.Monad.State.Lazy as LazyST
 import qualified Control.Monad.State.Strict as StrictST
