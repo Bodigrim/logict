@@ -44,7 +44,9 @@ import Text.Show (Show)
 
 #if MIN_VERSION_mtl(2,3,0)
 import qualified Control.Monad.Writer.CPS as CpsW
+#if !MIN_VERSION_mtl(2,3,2)
 import qualified Control.Monad.Trans.Writer.CPS as CpsW (writerT, runWriterT)
+#endif
 import Data.Monoid
 #endif
 
