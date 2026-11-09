@@ -22,7 +22,7 @@ extra-source-files:
   changelog.md
   README.md
 cabal-version: >=1.10
-tested-with: GHC ==8.0.2 GHC ==8.2.2 GHC ==8.4.4 GHC ==8.6.5 GHC ==8.8.4 GHC ==8.10.7 GHC ==9.0.2 GHC ==9.2.8 GHC ==9.4.8 GHC ==9.6.7 GHC ==9.8.4 GHC ==9.10.3 GHC ==9.12.2 GHC ==9.14.1
+tested-with: GHC ==8.4.4 GHC ==8.6.5 GHC ==8.8.4 GHC ==8.10.7 GHC ==9.0.2 GHC ==9.2.8 GHC ==9.4.8 GHC ==9.6.7 GHC ==9.8.4 GHC ==9.10.3 GHC ==9.12.2 GHC ==9.14.1
 
 source-repository head
   type: git
@@ -37,7 +37,7 @@ library
   ghc-options: -O2 -Wall -Wcompat
 
   build-depends:
-    base >=4.9 && <5,
+    base >=4.11 && <5,
     mtl >=2.0 && <2.4,
     transformers <0.7,
     exceptions <0.11

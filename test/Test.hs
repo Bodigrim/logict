@@ -25,10 +25,6 @@ import GHC.IsList (IsList(..))
 import GHC.Exts (IsList(..))
 #endif
 
-#if !MIN_VERSION_base(4,11,0)
-import           Data.Semigroup (Semigroup (..))
-#endif
-
 #if MIN_VERSION_mtl(2,3,0)
 import qualified Control.Monad.Writer.CPS as CpsW (WriterT, execWriterT, tell)
 import qualified Control.Monad.Trans.Writer.CPS as CpsW (runWriterT)

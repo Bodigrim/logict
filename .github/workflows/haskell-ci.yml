@@ -90,16 +90,6 @@ jobs:
             compilerVersion: 8.4.4
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-8.2.2
-            compilerKind: ghc
-            compilerVersion: 8.2.2
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-8.0.2
-            compilerKind: ghc
-            compilerVersion: 8.0.2
-            setup-method: ghcup
-            allow-failure: false
       fail-fast: false
     steps:
       - name: apt-get install
@@ -214,8 +204,8 @@ jobs:
           touch cabal.project
           touch cabal.project.local
           echo "packages: ${PKGDIR_logict}" >> cabal.project
-          if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then echo "package logict" >> cabal.project ; fi
-          if [ $((HCNUMVER >= 80200)) -ne 0 ] ; then echo "    ghc-options: -Werror=missing-methods -Werror=missing-fields" >> cabal.project ; fi
+          echo "package logict" >> cabal.project
+          echo "    ghc-options: -Werror=missing-methods -Werror=missing-fields" >> cabal.project
           if [ $((HCNUMVER >= 90400)) -ne 0 ] ; then echo "package logict" >> cabal.project ; fi
           if [ $((HCNUMVER >= 90400)) -ne 0 ] ; then echo "    ghc-options: -Werror=unused-packages" >> cabal.project ; fi
           if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "package logict" >> cabal.project ; fi
