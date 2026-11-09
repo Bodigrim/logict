@@ -189,7 +189,7 @@ main = defaultMain $
             let op = sample
                 extract = fmap (fmap fst)
             extract (msplit op) @?= [Just 1]
-            extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= [Just 2]
+            extract (msplit op >>= maybe undefined (msplit . snd)) @?= [Just 2]
 
         , testCase "(>>-) []" $ do
             (sample >>- const ([] :: [Integer])) @?= []
@@ -200,7 +200,7 @@ main = defaultMain $
             let op = ask
                 extract = fmap fst . catMaybes . flip runReaderT sample
             extract (msplit op) @?= [sample]
-            extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= []
+            extract (msplit op >>= maybe undefined (msplit . snd)) @?= []
 
 #if MIN_VERSION_mtl(2,3,0)
         , testCase "msplit CPS WriterT" $ do
@@ -208,7 +208,7 @@ main = defaultMain $
                 op = CpsW.tell 1 `mplus` op
                 extract = CpsW.execWriterT
             extract (msplit op) @?= [1]
-            extract (msplit op >>= \(Just (_,nxt)) -> msplit nxt) @?= [2]
+            extract (msplit op >>= maybe undefined (msplit . snd)) @?= [2]
 #endif
 
         , testCase "msplit LogicT" $ do
@@ -216,21 +216,21 @@ main = defaultMain $
                 op = foldr (mplus . return) mzero sample
                 extract = fmap fst . concatMap catMaybes . observeAllT
             extract (msplit op) @?= [1]
-            extract (msplit op >>= (\(Just (_,nxt)) -> msplit nxt)) @?= [2]
+            extract (msplit op >>= maybe undefined (msplit . snd)) @?= [2]
 
         , testCase "msplit strict StateT" $ do
             let op :: SS.StateT Integer [] Integer
                 op = SS.modify (+1) >> SS.get `mplus` op
                 extract = fmap fst . catMaybes . flip SS.evalStateT 0
             extract (msplit op) @?= [1]
-            extract (msplit op >>= \(Just (_,nxt)) -> msplit nxt) @?= [2]
+            extract (msplit op >>= maybe undefined (msplit . snd)) @?= [2]
 
         , testCase "msplit lazy StateT" $ do
             let op :: SL.StateT Integer [] Integer
                 op = SL.modify (+1) >> SL.get `mplus` op
                 extract = fmap fst . catMaybes . flip SL.evalStateT 0
             extract (msplit op) @?= [1]
-            extract (msplit op >>= \(Just (_,nxt)) -> msplit nxt) @?= [2]
+            extract (msplit op >>= maybe undefined (msplit . snd)) @?= [2]
         ]
       ]
 
