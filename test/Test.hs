@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Main where
+module Main (main) where
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -18,12 +18,6 @@ import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
 import           Data.List (uncons)
 import           Data.Maybe
-
-#if MIN_VERSION_base(4,17,0)
-import GHC.IsList (IsList(..))
-#else
-import GHC.Exts (IsList(..))
-#endif
 
 #if MIN_VERSION_mtl(2,3,0)
 import qualified Control.Monad.Writer.CPS as CpsW (WriterT, execWriterT, tell)
@@ -139,6 +133,7 @@ main = defaultMain $
     , testCase "observeMany none" $ ([] :: [Integer]) @=? observeMany 2 mzero
 
     , testCase "(>>-) Logic" $ do
+        let fromList xs = LogicT $ \cons nil -> foldr cons nil xs
         let sample = fromList [1, 2, 3] :: Logic Integer
         (sample >>- const (mempty :: Logic Integer)) @?= mempty
         (sample >>- (\x -> fmap (+ x) (fromList [100, 200, 300]))) @?= fromList [101,102,201,103,301,202,203,302,303]

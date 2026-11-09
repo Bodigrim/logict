@@ -24,6 +24,7 @@
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE Trustworthy           #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -603,12 +604,6 @@ instance IsList (Logic a) where
   type Item (Logic a) = a
   fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
   toList = observeAll
-#else
-fromList :: [a] -> Logic a
-fromList xs = LogicT $ \cons nil -> L.foldr cons nil xs
-
-toList :: Logic a -> [a]
-toList = observeAll
 #endif
 
 -- | @since 0.8.2.0
@@ -622,13 +617,13 @@ instance Ord a => Ord (Logic a) where
 -- | @since 0.8.2.0
 instance Show a => Show (Logic a) where
   showsPrec p xs = showParen (p > 10) $
-    showString "fromList " . shows (toList xs)
+    showString "fromList " . shows (observeAll xs)
 
 -- | @since 0.8.2.0
 instance Read a => Read (Logic a) where
   readPrec = parens $ prec 10 $ do
     Ident "fromList" <- lexP
-    xs <- readPrec
-    return (fromList xs)
+    (xs :: [a]) <- readPrec
+    return (LogicT $ \cons nil -> L.foldr cons nil xs)
 
   readListPrec = readListPrecDefault
