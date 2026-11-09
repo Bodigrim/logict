@@ -1,9 +1,9 @@
-{-# LANGUAGE CPP #-}
-
 import Control.Applicative
+import Control.Monad (guard)
 import Control.Monad.Logic
 import Data.Semigroup (Semigroup (..))
 
+-- parents to children mapping
 parents :: [ (String, String) ]
 parents = [ ("Sarah",  "John")
           , ("Arnold", "John")
