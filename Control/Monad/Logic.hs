@@ -130,11 +130,7 @@ newtype LogicT m a =
 -- failing if there are no results at all.
 --
 -- @since 0.2
-#if !MIN_VERSION_base(4,13,0)
-observeT :: Monad m => LogicT m a -> m a
-#else
 observeT :: Fail.MonadFail m => LogicT m a -> m a
-#endif
 observeT lt = unLogicT lt (const . return) (Fail.fail "No answer.")
 
 -------------------------------------------------------------------------
@@ -425,9 +421,6 @@ instance Monad (LogicT m) where
     return = pure
     m >>= f = LogicT $ \sk fk -> unLogicT m (\a fk' -> unLogicT (f a) sk fk') fk
     (>>) = (*>)
-#if !MIN_VERSION_base(4,13,0)
-    fail = Fail.fail
-#endif
 
 -- | @since 0.6.0.3
 instance Fail.MonadFail (LogicT m) where
