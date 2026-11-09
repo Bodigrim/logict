@@ -574,6 +574,13 @@ main = defaultMain $
                                   lnot (isEven v)
                                   return v) "state")
     ]
+
+  , testGroup "isConstantFailure optimization"
+    [ testCase "instance MonadLogic Logic" $
+      observeAll (mempty >>- (let x = x in x) :: Logic Int) @=? []
+    , testCase "instance MonadLogic []" $
+      (([] :: [Int]) >>- (let x = x in x :: Int -> [Int])) @=? []
+    ]
   ]
 
 safely :: IO Integer -> IO (Either String Integer)

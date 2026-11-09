@@ -374,6 +374,7 @@ instance MonadLogic [] where
     msplit []     = pure Nothing
     msplit (x:xs) = pure $ Just (x, xs)
 
+    [] >>- _ = []
     m >>- f
       | isConstantFailure f = []
       -- Otherwise apply the default definition

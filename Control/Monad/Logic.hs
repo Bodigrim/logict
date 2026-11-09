@@ -470,10 +470,8 @@ instance {-# INCOHERENT #-} MonadLogic Logic where
     once m = LogicT $ \sk fk -> unLogicT m (\a _ -> sk a fk) fk
     lnot m = LogicT $ \sk fk -> unLogicT m (\_ _ -> fk) (sk () fk)
 
-    m >>- f
-      | isConstantFailure f = empty
-      -- Otherwise apply the default definition from Control.Monad.Logic.Class
-      | otherwise = msplit m >>= maybe empty (\(a, m') -> interleave (f a) (m' >>- f))
+    m >>- f = msplit m >>= maybe empty
+      (if isConstantFailure f then const empty else \(a, m') -> interleave (f a) (m' >>- f))
 
 data MyException = MyException
   deriving (Show)
