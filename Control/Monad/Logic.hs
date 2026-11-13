@@ -69,6 +69,7 @@ import Control.Monad.Trans (MonadTrans(..))
 import Control.Monad.Zip (MonadZip (..))
 
 import Data.Bool (Bool (..), otherwise)
+import Data.Either (Either(..))
 import Data.Eq (Eq, (==))
 import qualified Data.Foldable as F
 import Data.Function (($), (.), const, on)
@@ -594,13 +595,25 @@ instance MonadCatch m => MonadCatch (LogicT m) where
 
 liftCatch
   :: forall m a e
-   . (forall r. m r -> (e -> m r) -> m r)
+   . Monad m
+  => (forall r. m r -> (e -> m r) -> m r)
   -> LogicT m a
   -> (e -> LogicT m a)
   -> LogicT m a
-liftCatch ctch m0 h = LogicT $ \sk fk -> let
-      handle r = r `ctch` \e -> unLogicT (h e) sk fk
-    in handle $ unLogicT m0 (\a -> sk a . handle) fk
+liftCatch ctch m0 h = LogicT go
+  where
+    tryErr act = fmap Right act `ctch` (pure . Left)
+
+    go :: forall r. (a -> m r -> m r) -> m r -> m r
+    go sk fk = gogo m0
+      where
+        gogo :: LogicT m a -> m r
+        gogo m = do
+          mar <- tryErr $ unLogicT m (\a r -> pure $ Just (a, lift r >>= reflect)) (pure Nothing)
+          case mar of
+            Left e -> unLogicT (h e) sk fk
+            Right Nothing -> fk
+            Right (Just (a, r)) -> sk a (gogo r)
 
 #ifdef __GLASGOW_HASKELL__
 -- | @since 0.8.2.0

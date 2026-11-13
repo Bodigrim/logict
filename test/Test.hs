@@ -11,11 +11,13 @@ import           Control.Concurrent ( threadDelay )
 import           Control.Concurrent.Async ( race )
 import           Control.Exception
 import           Control.Monad
+import           Control.Monad.Error.Class
 import           Control.Monad.Identity
 import           Control.Monad.Logic
 import           Control.Monad.Reader
 import qualified Control.Monad.State.Lazy as SL
 import qualified Control.Monad.State.Strict as SS
+import           Data.Either
 import           Data.List (uncons)
 import           Data.Maybe
 
@@ -580,6 +582,19 @@ main = defaultMain $
       observeAll (mempty >>- (let x = x in x) :: Logic Int) @=? []
     , testCase "instance MonadLogic []" $
       (([] :: [Int]) >>- (let x = x in x :: Int -> [Int])) @=? []
+    ]
+  , testGroup "MonadError"
+    [ testCase "pure and catchError" $ do
+      results <- observeAllT (pure False `catchError` (\_ -> pure True))
+      [False] @=? results
+    , testCase "fail and catchError" $ do
+      results <- observeAllT (throwError undefined `catchError` (\_ -> pure True))
+      [True] @=? results
+    , testCase "pure and catchError in do-block" $ do
+      results :: Either SomeException [Bool] <- try $ observeAllT $ do
+        x <- pure False `catchError` (\_ -> pure True)
+        if x then pure False else throwError undefined
+      True @=? isLeft results
     ]
   ]
 
