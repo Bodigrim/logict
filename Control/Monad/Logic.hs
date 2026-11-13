@@ -582,9 +582,7 @@ instance MonadState s m => MonadState s (LogicT m) where
 -- | @since 0.4
 instance MonadError e m => MonadError e (LogicT m) where
   throwError = lift . throwError
-  catchError m h = LogicT $ \sk fk -> let
-      handle r = r `catchError` \e -> unLogicT (h e) sk fk
-    in handle $ unLogicT m (\a -> sk a . handle) fk
+  catchError = liftCatch catchError
 
 -- | @since 0.8.2.0
 instance MonadThrow m => MonadThrow (LogicT m) where
@@ -592,9 +590,17 @@ instance MonadThrow m => MonadThrow (LogicT m) where
 
 -- | @since 0.8.2.0
 instance MonadCatch m => MonadCatch (LogicT m) where
-  catch m h = LogicT $ \sk fk -> let
-      handle r = r `catch` \e -> unLogicT (h e) sk fk
-    in handle $ unLogicT m (\a -> sk a . handle) fk
+  catch = liftCatch catch
+
+liftCatch
+  :: forall m a e
+   . (forall r. m r -> (e -> m r) -> m r)
+  -> LogicT m a
+  -> (e -> LogicT m a)
+  -> LogicT m a
+liftCatch ctch m0 h = LogicT $ \sk fk -> let
+      handle r = r `ctch` \e -> unLogicT (h e) sk fk
+    in handle $ unLogicT m0 (\a -> sk a . handle) fk
 
 #ifdef __GLASGOW_HASKELL__
 -- | @since 0.8.2.0
